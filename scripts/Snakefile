@@ -1,0 +1,51 @@
+# ---------------------
+# CONFIGURATION
+# ---------------------
+import os
+
+# Input data directory
+DATA_DIR = "data"
+# Output directories
+PARSED_DIR = "parsed"
+BOLTZ_DIR = "boltz_results"
+PLOTS_DIR = "plots"
+
+# Ensure output directories exist
+for d in [PARSED_DIR, BOLTZ_DIR, PLOTS_DIR]:
+    os.makedirs(d, exist_ok=True)
+
+# List all input files
+SAMPLES = glob_wildcards(os.path.join(DATA_DIR, "{sample}.txt")).sample
+
+# -------------------
+# RULES
+# -------------------
+
+rule all:
+    """
+    The final target rule that defines workflow outputs.
+    """
+    input: expand(os.path.join(PLOTS_DIR, "{sample}.png"), sample=SAMPLES)
+
+# --------------------
+# 1. Parse raw data
+# --------------------
+rule parse_data:
+    input:
+        raw=os.path.join(DATA_DIR, "{sample}.txt")
+    output: 
+        parsed=os.path.join(PARSED_DIR, "{sample}_parsed.txt")
+    shell:
+        """
+        # Replace with parsing command
+        python scripts/parse_data.py {input.raw} > {output.parsed}
+        
+        """
+
+# ----------------------------
+# 2. Run boltz on parsed data
+# ----------------------------
+rule run_boltz:
+    input:
+        parsed=os.path.join(PARSED_DIR, "{sample}_parsed.txt")
+    output:
