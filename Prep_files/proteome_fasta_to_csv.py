@@ -79,8 +79,8 @@ def fasta_to_csv(fasta_path: Path, csv_path: Path, limit: int = 0) -> int:
 
 
 def main():
-    fasta_path = Path("proteome.fasta")
-    csv_path = Path("proteome.csv")
+    fasta_path = Path("output_files/proteome.fasta")
+    csv_path = Path("output_files/proteome.csv")
 
     if not fasta_path.exists():
         raise FileNotFoundError(

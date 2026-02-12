@@ -24,7 +24,7 @@ def download_proteome_fasta(proteome_id: str, out_path: Path) -> None:
 
 def main():
     proteome_id = "UP000005640"
-    fasta_path = Path("proteome.fasta")
+    fasta_path = Path("output_files/proteome.fasta")
 
     if fasta_path.exists():
         print(f"Using cached {fasta_path.resolve()}")
