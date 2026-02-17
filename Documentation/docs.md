@@ -1,0 +1,1 @@
+This folder is to docuement how to use files, why we chose specific methods, and tech stack

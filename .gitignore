@@ -1,4 +1,7 @@
 logs
 outputs
-Prep_files/output_files
+prep_files/output_files
+prep_files/boltz_ready
 input_files
+processed_data
+figs_and_images

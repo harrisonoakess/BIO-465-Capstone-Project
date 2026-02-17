@@ -55,17 +55,26 @@ def make_yaml(protein_seq: str, ligand: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--x_proteins", type=int, required=True)
-    ap.add_argument("--y_ceramides", type=int, required=True)
+    ap.add_argument("--proteome_csv", type=Path, required=True)
+    ap.add_argument("--ceramide_csv", type=Path, required=True)
+    ap.add_argument("--output_dir_name", type=str)
+    # ap.add_argument("--x_proteins", type=int, required=True)
+    # ap.add_argument("--y_ceramides", type=int, required=True)
     ap.add_argument("--random", action="store_true", help="randomly sample instead of first X/Y")
     ap.add_argument("--seed", type=int, default=7)
     args = ap.parse_args()
 
-    proteome_csv = Path("output_files/proteome.csv")
-    ceramides_csv = Path("output_files/ceramides.csv")
+    # proteome_csv = Path("output_files/proteome.csv")
+    # ceramides_csv = Path("output_files/ceramides.csv")
+
+    # proteome_csv = Path("output_files/paul_proteome.csv")
+    # ceramides_csv = Path("output_files/paul_ceramides.csv")
+
+    path = Path(__file__).parent / "output_files"
+    proteome_csv = path / args.proteome_csv
+    ceramides_csv = path / args.ceramide_csv
 
     if not proteome_csv.exists():
         raise FileNotFoundError(f"Missing {proteome_csv}")
@@ -75,20 +84,35 @@ def main():
     proteins = read_proteins(proteome_csv)
     ceramides = read_ceramides(ceramides_csv)
 
-    if args.x_proteins > len(proteins):
-        raise ValueError(f"x_proteins={args.x_proteins} > proteins available ({len(proteins)})")
-    if args.y_ceramides > len(ceramides):
-        raise ValueError(f"y_ceramides={args.y_ceramides} > ceramides available ({len(ceramides)})")
+    # if args.x_proteins > len(proteins):
+    #     raise ValueError(f"x_proteins={args.x_proteins} > proteins available ({len(proteins)})")
+    # if args.y_ceramides > len(ceramides):
+    #     raise ValueError(f"y_ceramides={args.y_ceramides} > ceramides available ({len(ceramides)})")
+
+    # if args.random:
+    #     rng = random.Random(args.seed)
+    #     proteins = rng.sample(proteins, k=args.x_proteins)
+    #     ceramides = rng.sample(ceramides, k=args.y_ceramides)
+    # else:
+    #     proteins = proteins[:args.x_proteins]
+    #     ceramides = ceramides[:args.y_ceramides]
+
+    x_proteins = len(proteins)
+    y_ceramides = len(ceramides)
 
     if args.random:
         rng = random.Random(args.seed)
-        proteins = rng.sample(proteins, k=args.x_proteins)
-        ceramides = rng.sample(ceramides, k=args.y_ceramides)
+        proteins = rng.sample(proteins, k=x_proteins)
+        ceramides = rng.sample(ceramides, k=y_ceramides)
     else:
-        proteins = proteins[:args.x_proteins]
-        ceramides = ceramides[:args.y_ceramides]
+        proteins = proteins[:x_proteins]
+        ceramides = ceramides[:y_ceramides]
 
-    run_name = datetime.now().strftime("run_%Y%m%d_%H%M%S")
+    if args.output_dir_name:
+        run_name = args.output_dir_name
+    else:
+        run_name = datetime.now().strftime("run_%Y%m%d_%H%M%S")
+    
     out_dir = Path("boltz_ready") / run_name
     out_dir.mkdir(parents=True, exist_ok=True)
 
