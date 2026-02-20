@@ -1,21 +1,40 @@
 #!/bin/bash
-# Wrapper to auto-chunk Slurm array submissions for notchpeak-gpu
-# *** Run with bash submit_array.sh 
+# Usage:
+# bash submit_array.sh <input_yaml_directory>
 
-# Max array size allowed by cluster
-MAX_ARRAY_SIZE=1000
+set -e
 
-# Max concurrent tasks per chunk
-CONCURRENT=50  # corresponds to %50 in --array
+if [ -z "$1" ]; then 
+    echo "Usage: bash submit_array.sh <input_yaml_directory>"
+    exit 1
+fi
 
-# Path to array job script
-JOB_SCRIPT="slurm_scripts/notchpeak_job_array.sh"
+INPUT_DIR="$1"
 
-# Path to your YAML list
-YAML_LIST="test_yaml_list.txt"
+if [ ! -d "$INPUT_DIR" ]; then 
+    echo "Error: Directory $INPUT_DIR does not exist"
+    exit 1 
+fi
 
-# Total number of YAML files
+PROJECT_ROOT=$(pwd)
+YAML_LIST="${PROJECT_ROOT}/yaml_list.txt"
+
+echo "Creating YAML list from: $INPUT_DIR"
+find "$INPUT_DIR" -type f -name "*.yaml" | sort > "$YAML_LIST"
+
 TOTAL=$(wc -l < "$YAML_LIST")
+
+if [ "$TOTAL" -eq 0 ]; then
+    echo "No YAML files found."
+    exit 1
+fi
+
+echo "Found $TOTAL YAML files."
+
+# Max array size allowed by cluster is 1000
+MAX_ARRAY_SIZE=10
+CONCURRENT=2  # corresponds to %50 in --array
+JOB_SCRIPT="${PROJECT_ROOT}/slurm_scripts/notchpeak_job_array.sh"
 
 START=0
 
@@ -26,7 +45,10 @@ while [ $START -lt $TOTAL ]; do
     fi
 
     echo "Submitting array ${START}-${END}%$CONCURRENT ..."
-    sbatch --array=${START}-${END}%$CONCURRENT "$JOB_SCRIPT"
+    sbatch \
+        --array=${START}-${END}%$CONCURRENT \
+        --export=ALL,YAML_LIST="$YAML_LIST",PROJECT_ROOT="$PROJECT_ROOT" \
+        "$JOB_SCRIPT"
 
     START=$((END + 1))
 done
