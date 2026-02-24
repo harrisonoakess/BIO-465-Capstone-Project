@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+NADH_SMILES = "NC(=O)C1=CN([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C@@H](n4cnc5c(N)ncnc54)[C@H](O)[C@@H]3O)[C@@H](O)[C@H]2O)C=CC1"
 
 def safe_name(s: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]+", "_", s).strip("_")
@@ -51,6 +52,15 @@ def make_yaml(protein_seq: str, ligand: dict) -> str:
     else:
         v = ligand["value"].replace("'", "''")
         lines.append(f"      smiles: '{v}'")
+
+    lines.append("  - ligand:")                         # This section is hard coded in*****
+    lines.append("      id: C")                         # This section is hard coded in*****
+    lines.append(f"      smiles: '{NADH_SMILES}'")      # This section is hard coded in*****    
+
+
+    lines.append("properties:")
+    lines.append("  - affinity:")
+    lines.append("      binder: B")  # must match ligand id
 
     return "\n".join(lines) + "\n"
 
