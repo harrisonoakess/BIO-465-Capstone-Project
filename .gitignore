@@ -2,6 +2,8 @@ logs
 outputs
 prep_files/output_files
 prep_files/boltz_ready
+prep_files/proteome_chunks
 input_files
 processed_data
 figs_and_images
+plots

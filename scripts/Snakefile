@@ -7,8 +7,8 @@ import os
 DATA_DIR = "data"
 # Output directories
 PARSED_DIR = "parsed"
-BOLTZ_DIR = "boltz_results"
-PLOTS_DIR = "plots"
+BOLTZ_DIR = "../boltz_results"
+PLOTS_DIR = "../plots"
 
 # Ensure output directories exist
 for d in [PARSED_DIR, BOLTZ_DIR, PLOTS_DIR]:
@@ -28,8 +28,12 @@ rule all:
     input: expand(os.path.join(PLOTS_DIR, "{sample}.png"), sample=SAMPLES)
 
 # --------------------
-# 1. Parse raw data
+# Download proteome
 # --------------------
+
+# ----------------------------------
+# Parse proteome into .yaml files
+# ----------------------------------
 rule parse_data:
     input:
         raw=os.path.join(DATA_DIR, "{sample}.txt")
@@ -42,10 +46,27 @@ rule parse_data:
         
         """
 
-# ----------------------------
-# 2. Run boltz on parsed data
-# ----------------------------
+# ----------------------------------
+# Generate proteome chunks for MSA
+# ----------------------------------
+
+# --------------------------------
+# Generate MSA for each protein
+# --------------------------------
+
+
+# ---------------------------------------
+# Run boltz on parsed data with MSAs
+# ---------------------------------------
 rule run_boltz:
     input:
         parsed=os.path.join(PARSED_DIR, "{sample}_parsed.txt")
     output:
+
+# ------------------
+# Parse output
+# ------------------
+
+# ------------------
+# Generate plots 
+# ------------------
