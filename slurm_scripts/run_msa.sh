@@ -3,25 +3,39 @@
 #SBATCH --output=../logs/msa_%A_%a.log
 #SBATCH --error=../logs/msa_%A_%a.log
 #SBATCH --time=08:00:00
-#SBATCH --partition=notchpeak-shared-short
+#SBATCH --partition=kingspeak
+#SBATCH --account=stewartp
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --array=0-999 # Number of sequence chunks - 1
+#SBATCH --array=0-999
+
+# Offset
+OFFSET=${OFFSET:-0}
 
 module purge
 module load colabfold
 
 # Path to chunked FASTAs
 CHUNK_DIR="../prep_files/proteome_chunks"
-FASTA_CHUNKS=($CHUNK_DIR/*.fasta)
+OUTPUT_BASE="../outputs/msa"
 
-# Map the SLURM_ARRAY_TASK_ID to the correct FASTA chunk
-FASTA_FILE=${FASTA_CHUNKS[$SLURM_ARRAY_TASK_ID]}
+# Read all FASTA files into an array
+mapfile -t FASTA_CHUNKS < <(ls -1 "$CHUNK_DIR"/*.fasta)
+
+# Compute global file index
+GLOBAL_INDEX=$((SLURM_ARRAY_TASK_ID + OFFSET))
+FASTA_FILE="${FASTA_CHUNKS[$GLOBAL_INDEX]}"
+
+# Safety check
+if [ -z "$FASTA_FILE" ]; then
+    echo "No FASTA file for global index $GLOBAL_INDEX"
+    exit 0
+fi
 
 # Output directory for each sequence
-OUTPUT_DIR="../outputs/msa/$(basename $FASTA_FILE .fasta)"
+OUTPUT_DIR="$OUTPUT_BASE/$(basename $FASTA_FILE .fasta)"
 
 # Check if MSA has already been generated (for idempotency)
 if [ -f "$OUTPUT_DIR/msa.a3m" ]; then 
@@ -33,6 +47,7 @@ mkdir -p $OUTPUT_DIR
 
 # Run MSA only using CHPC's local server
 echo "Generating MSA for $FASTA_FILE ..."
+
 colabfold_batch \
     --host-url=http://colabfold01.int.chpc.utah.edu:8088 \
     --msa-only \

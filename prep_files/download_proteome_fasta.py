@@ -7,7 +7,7 @@ UNIPROT_STREAM_URL = "https://rest.uniprot.org/uniprotkb/stream"
 
 def download_proteome_fasta(proteome_id: str, out_path: Path) -> None:
     params = {
-        "query": f"(proteome:{proteome_id})",
+        "query": f"(organism_id:9606) AND (proteome:{proteome_id}) AND (reviewed:true) AND (is_isoform:false)",
         "format": "fasta",
         "compressed": "false",
     }
