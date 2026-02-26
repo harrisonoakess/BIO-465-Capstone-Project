@@ -16,7 +16,9 @@ if [ ! -d "$INPUT_DIR" ]; then
     exit 1 
 fi
 
-PROJECT_ROOT=$(pwd)
+SCRIPT_DIR="$ cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
+PROJECT_ROOT="/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project"
 YAML_LIST="${PROJECT_ROOT}/yaml_list.txt"
 
 echo "Creating YAML list from: $INPUT_DIR"

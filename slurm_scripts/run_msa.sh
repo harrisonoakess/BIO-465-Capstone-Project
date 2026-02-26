@@ -9,47 +9,40 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --array=0-999
+#SBATCH --array=0-999   # 1000 tasks per batch
 
-# Offset
-OFFSET=${OFFSET:-0}
+OFFSET=${OFFSET:-0}    # Passed by submit_msa.sh
 
 module purge
-module load colabfold
+module load colabfold/1.5.5-0525
 
-# Path to chunked FASTAs
 CHUNK_DIR="../prep_files/proteome_chunks"
 OUTPUT_BASE="../outputs/msa"
 
-# Read all FASTA files into an array
+# Load all FASTA files
 mapfile -t FASTA_CHUNKS < <(ls -1 "$CHUNK_DIR"/*.fasta)
 
-# Compute global file index
+# Compute global index
 GLOBAL_INDEX=$((SLURM_ARRAY_TASK_ID + OFFSET))
 FASTA_FILE="${FASTA_CHUNKS[$GLOBAL_INDEX]}"
 
-# Safety check
 if [ -z "$FASTA_FILE" ]; then
-    echo "No FASTA file for global index $GLOBAL_INDEX"
+    echo "No FASTA file for global index $GLOBAL_INDEX, skipping..."
     exit 0
 fi
 
-# Output directory for each sequence
 OUTPUT_DIR="$OUTPUT_BASE/$(basename $FASTA_FILE .fasta)"
+mkdir -p "$OUTPUT_DIR"
 
-# Check if MSA has already been generated (for idempotency)
-if [ -f "$OUTPUT_DIR/msa.a3m" ]; then 
+# Skip if MSA already exists
+if [ -f "$OUTPUT_DIR/msa.a3m" ]; then
     echo "MSA already exists for $FASTA_FILE, skipping..."
     exit 0
 fi
 
-mkdir -p $OUTPUT_DIR
-
-# Run MSA only using CHPC's local server
 echo "Generating MSA for $FASTA_FILE ..."
-
 colabfold_batch \
     --host-url=http://colabfold01.int.chpc.utah.edu:8088 \
     --msa-only \
-    $FASTA_FILE \
-    $OUTPUT_DIR 
+    "$FASTA_FILE" \
+    "$OUTPUT_DIR"

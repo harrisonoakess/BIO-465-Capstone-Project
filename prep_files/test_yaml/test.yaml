@@ -1,0 +1,12 @@
+version: 1
+sequences:
+  - protein:
+      id: A
+      sequence: MYRNEFTAWYRRMSVVYGIGTWSVLGSLLYYSRTMAKSSVDQKDGSASEVPSELSERPKGFYVETVVTYKEDFVPNTEKILNYWKSWTGGPGTEP
+      msa: "/uufs/chpc.utah.edu/common/home/u6073678/Capstone/BIO-465-Capstone-Project/test_output/sp_A0A096LP01_SIM26_HUMAN_Small_integral_membrane_protein_26_OS_Homo_sapiens_OX_9606_GN_SMIM26_PE_1_SV_1.a3m"
+  - ligand:
+      id: B
+      smiles: 'CC(=O)N[C@@H]1[C@H]([C@@H]([C@H](OC1O)CO)O)O'
+properties:
+  - affinity:
+      binder: B

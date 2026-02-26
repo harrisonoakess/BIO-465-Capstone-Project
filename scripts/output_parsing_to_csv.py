@@ -36,11 +36,16 @@ def get_predictions(input_folder: str, file_names: list):
         with open(confidence_file, "r") as f:
             confidence = json.load(f)
 
+        affinity_file = pred_folder / f"affinity_{stem}.json"
+
+        with open(affinity_file, "r") as f:
+            affinity = json.load(f)
+
         protein_name = stem.split("__")[0]
         ligand_name = stem.split("__")[1]
 
         protein_ligand_data = {'protein': protein_name, 'ligand': ligand_name}
-        confidence = {**protein_ligand_data, **confidence}
+        confidence = {**protein_ligand_data, **confidence, **affinity}
         confidence_list.append(confidence)
         
     return confidence_list
