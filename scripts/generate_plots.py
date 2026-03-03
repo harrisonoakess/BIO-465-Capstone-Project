@@ -46,7 +46,7 @@ def make_plot_folder(csv_file_name):
 def main():
     ap = argparse.ArgumentParser()
     # ap.add_argument("--csv", type=str, required=True)
-    ap.add_argument("--csv", type=str, default="confidence_predictions_paul_with_NADH.csv")
+    ap.add_argument("--csv", type=str, default="confidence_predictions_paul_with_NADPH.csv")
     args = ap.parse_args()
 
     protein_field = 'protein'
