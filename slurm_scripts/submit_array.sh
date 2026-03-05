@@ -1,56 +1,30 @@
 #!/bin/bash
-# Usage:
-# bash submit_array.sh <input_yaml_directory>
+#SBATCH --job-name=boltz_proteome
+#SBATCH --time=04:00:00
+#SBATCH --partition=rai-gpu-grn
+#SBATCH --qos=rai-gpu-grn
+#SBATCH --account=rai
+#SBATCH --mail-user=aw998@byu.edu
+#SBATCH --mail-type=BEGIN,END,FAIL
 
-set -e
+# Define scratch project root
+PROJECT_ROOT="/scratch/rai/vast1/stewartp"
+SCRIPT_DIR="/uufs/chpc.utah.edu/common/home/u6073678/Capstone/BIO-465-Capstone-Project/slurm_scripts"
+YAML_DIR="/scratch/rai/vast1/stewartp/yamls"
 
-if [ -z "$1" ]; then 
-    echo "Usage: bash submit_array.sh <input_yaml_directory>"
-    exit 1
-fi
+# Create log directories
+mkdir -p "$PROJECT_ROOT/logs/array" "$PROJECT_ROOT/logs/runtime"
 
-INPUT_DIR="$1"
 
-if [ ! -d "$INPUT_DIR" ]; then 
-    echo "Error: Directory $INPUT_DIR does not exist"
-    exit 1 
-fi
+# Generate an array of yaml files
+YAML_ARRAY=( "$YAML_DIR"/*.yaml )
+NUM_YAML=${#YAML_ARRAY[@]}
 
-SCRIPT_DIR="$ cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-# PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
-PROJECT_ROOT="/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project"
-YAML_LIST="${PROJECT_ROOT}/yaml_list.txt"
+echo "Found $NUM_YAML YAML files in $YAML_DIR"
 
-echo "Creating YAML list from: $INPUT_DIR"
-find "$INPUT_DIR" -type f -name "*.yaml" | sort > "$YAML_LIST"
+# Submit array job, limiting concurrency to 50 GPUs at a time
 
-TOTAL=$(wc -l < "$YAML_LIST")
-
-if [ "$TOTAL" -eq 0 ]; then
-    echo "No YAML files found."
-    exit 1
-fi
-
-echo "Found $TOTAL YAML files."
-
-# Max array size allowed by cluster is 1000
-MAX_ARRAY_SIZE=10
-CONCURRENT=2  # corresponds to %50 in --array
-JOB_SCRIPT="${PROJECT_ROOT}/slurm_scripts/notchpeak_job_array.sh"
-
-START=0
-
-while [ $START -lt $TOTAL ]; do
-    END=$((START + MAX_ARRAY_SIZE - 1))
-    if [ $END -ge $((TOTAL - 1)) ]; then
-        END=$((TOTAL - 1))
-    fi
-
-    echo "Submitting array ${START}-${END}%$CONCURRENT ..."
-    sbatch \
-        --array=${START}-${END}%$CONCURRENT \
-        --export=ALL,YAML_LIST="$YAML_LIST",PROJECT_ROOT="$PROJECT_ROOT" \
-        "$JOB_SCRIPT"
-
-    START=$((END + 1))
-done
+sbatch \
+    --array=0-$((NUM_YAML-1))%50 \
+    --export=ALL,PROJECT_ROOT="$PROJECT_ROOT",YAML_DIR="$YAML_DIR" \
+    "$SCRIPT_DIR/rai_array.sh"

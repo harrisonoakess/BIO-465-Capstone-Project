@@ -1,7 +1,7 @@
 from pathlib import Path 
 
 fasta_file = Path("../prep_files/output_files/proteome.fasta")
-out_dir = Path("../prep_files/proteome_chunks")
+out_dir = Path("/scratch/rai/vast1/stewartp/proteome_chunks")
 out_dir.mkdir(parents=True, exist_ok=True)
 
 chunk_size = 1
