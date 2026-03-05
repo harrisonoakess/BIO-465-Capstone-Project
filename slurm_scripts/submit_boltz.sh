@@ -13,8 +13,7 @@ SCRIPT_DIR="/uufs/chpc.utah.edu/common/home/u6073678/Capstone/BIO-465-Capstone-P
 YAML_DIR="/scratch/rai/vast1/stewartp/yamls"
 
 # Create log directories
-mkdir -p "$PROJECT_ROOT/logs/array" "$PROJECT_ROOT/logs/runtime"
-
+mkdir -p "$PROJECT_ROOT/logs/boltz_array"
 
 # Generate an array of yaml files
 YAML_ARRAY=( "$YAML_DIR"/*.yaml )
@@ -27,4 +26,4 @@ echo "Found $NUM_YAML YAML files in $YAML_DIR"
 sbatch \
     --array=0-$((NUM_YAML-1))%50 \
     --export=ALL,PROJECT_ROOT="$PROJECT_ROOT",YAML_DIR="$YAML_DIR" \
-    "$SCRIPT_DIR/rai_array.sh"
+    "$SCRIPT_DIR/boltz_array.sh"

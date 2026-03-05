@@ -3,8 +3,10 @@
 #SBATCH --output=../logs/chunk_proteome_%j.log
 #SBATCH --error=../logs/chunk_proteome_%j.log
 #SBATCH --time=00:10:00
-#SBATCH --partition=notchpeak-shared-short
-#SBATCH --account=notchpeak-shared-short
+#SBATCH --cluster=granite
+#SBATCH --partition=rai-gpu-grn
+#SBATCH --qos=rai-gpu-grn-short
+#SBATCH --account=rai
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
