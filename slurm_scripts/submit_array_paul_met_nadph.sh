@@ -16,7 +16,7 @@ if [ ! -d "$INPUT_DIR" ]; then
     exit 1 
 fi
 
-SCRIPT_DIR="$ cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
 YAML_LIST="${PROJECT_ROOT}/yaml_list.txt"
 
@@ -35,7 +35,7 @@ echo "Found $TOTAL YAML files."
 # Max array size allowed by cluster is 1000
 MAX_ARRAY_SIZE=10
 CONCURRENT=2  # corresponds to %50 in --array
-JOB_SCRIPT="${PROJECT_ROOT}/slurm_scripts/notchpeak_job_array.sh"
+JOB_SCRIPT="${PROJECT_ROOT}/slurm_scripts/boltz_array.sh"
 
 START=0
 
