@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=boltz_control_tests
+#SBATCH --job-name=paul_with_nadph
 #SBATCH --output=../logs/boltz_%j.log
 #SBATCH --error=../logs/boltz_%j.log
 #SBATCH --time=08:00:00
@@ -20,7 +20,7 @@ module load boltz2
 
 nvidia-smi
 
-boltz predict ../prep_files/boltz_ready/control_tests \
+boltz predict ../prep_files/boltz_ready/paul_with_NADPH \
     --use_msa_server \
     --num_workers 4 \
     --out_dir ../outputs \

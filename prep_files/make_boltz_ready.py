@@ -153,6 +153,7 @@ def main():
 
     # CHANGE #4: compute per-protein msa path and pass it to make_yaml()
     n = 0
+    file_delim = "__"
     for p in proteins:
         acc_safe = safe_name(p["accession"])
         msa_file = (msa_base / acc_safe / "msa.a3m").resolve()
@@ -161,7 +162,7 @@ def main():
             raise FileNotFoundError(f"Missing MSA for {p['accession']}: {msa_file}")
 
         for c in ceramides:
-            fname = f"{safe_name(p['accession'])}__{safe_name(c['ligand_id'])}.yaml"
+            fname = f"{safe_name(p['accession'])}{file_delim}{safe_name(c['ligand_id'])}.yaml"
             (out_dir / fname).write_text(
                 make_yaml(p["sequence"], str(msa_file), c),
                 encoding="utf-8",

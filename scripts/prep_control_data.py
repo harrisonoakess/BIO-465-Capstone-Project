@@ -3,6 +3,7 @@ from pathlib import Path
 import csv
 import re
 import random
+import hashlib
 
 script_dir = Path(__file__).parent.resolve()
 data_dir = Path('../prep_files/output_files/')
@@ -10,6 +11,13 @@ yaml_dir = Path('../prep_files/boltz_ready/')
 
 def safe_name(s: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]+", "_", s).strip("_")
+
+def make_ligand_id(smiles):
+    if isinstance(smiles, float) or smiles is None:
+        return None
+    
+    id = hashlib.sha256(smiles.encode('utf-8')).hexdigest()
+    return id[:16]
 
 def make_control_protein_ligand_csv(output_name):
     data_name = 'AID_977608_datatable_all.csv'
@@ -27,6 +35,9 @@ def make_control_protein_ligand_csv(output_name):
     reference = reference[['PDB', 'CHAIN', 'SP_PRIMARY']]
     proteome = proteome[['accession', 'sequence']]
 
+    data = data.rename(columns={'PUBCHEM_EXT_DATASOURCE_SMILES': 'SMILES', 'IC50': 'Experimental_Affinity'})
+    reference = reference.rename(columns={'SP_PRIMARY': 'accession'})
+
     chain_counts = reference.groupby('PDB')['CHAIN'].nunique()
     monomer_pdbs = chain_counts[chain_counts == 1].index
 
@@ -35,16 +46,19 @@ def make_control_protein_ligand_csv(output_name):
     output = (
         data
         .merge(reference, on='PDB', how='left')
-        .merge(proteome, left_on='SP_PRIMARY', right_on='accession', how='left')
-        .rename(columns={'SP_PRIMARY': 'UniProt', 
-                         'IC50': 'Affinity',
-                         'PUBCHEM_EXT_DATASOURCE_SMILES': 'SMILES'})
+        .merge(proteome, on='accession', how='left')
     )
     
-    output = output.drop(output.index[0:4])
-    output = output.drop(columns=['CHAIN', 'UniProt'])
-    output = output.dropna(subset=['sequence'])
-    output = output.reset_index(drop=True)
+    needed_cols = ['accession', 'Protein Name', 'PDB', 'sequence', 'SMILES', 'ligand_id', 'Experimental_Affinity']
+
+    output = output.drop(columns=['CHAIN'])
+    output['ligand_id'] = output['SMILES'].apply(make_ligand_id)
+    output = output.dropna(subset=['sequence', 'ligand_id'])
+    output = output[needed_cols]
+    output = output.sort_values(by=needed_cols, ascending=True)
+
+    print(f'Number of unique accessions in output: {output["accession"].nunique()}')
+    print(f'Number of unique sequences in output: {output["sequence"].nunique()}')
 
     output.to_csv(script_dir / data_dir / output_name, index=False)
     print(f'Wrote {len(output)} control proteins to {output_name}')
@@ -55,11 +69,12 @@ def read_yaml_data(csv_path: Path):
         reader = csv.DictReader(f)
         for row in reader:
             acc = (row.get("accession") or "").strip()
-            protein_name = (row.get("Protein Name") or "").strip()
+            pdb = (row.get("PDB") or "").strip()
             seq = (row.get("sequence") or "").strip()
             smiles = (row.get("SMILES") or "").strip()
-            if acc and protein_name and seq and smiles:
-                yaml_data.append({"accession": acc, "Protein Name": protein_name, "sequence": seq, "SMILES": smiles})
+            ligand_id = (row.get("ligand_id") or "").strip()
+            if acc and pdb and seq and smiles and ligand_id:
+                yaml_data.append({"accession": acc, "PDB": pdb, "sequence": seq, "SMILES": smiles, "ligand_id": ligand_id})
     return yaml_data
 
 
@@ -67,6 +82,7 @@ def make_yaml_files(yaml_data, yaml_dir_name, num_files=None):
     
     yaml_dir_path = script_dir / yaml_dir / yaml_dir_name
     yaml_dir_path.mkdir(parents=True, exist_ok=True)
+    file_delim = "__"
 
     if num_files is not None:
         rng = random.Random(42)
@@ -75,16 +91,17 @@ def make_yaml_files(yaml_data, yaml_dir_name, num_files=None):
 
     for row in yaml_data:
         acc = row['accession']
-        protein_name = row['Protein Name']
+        pdb = row['PDB']
         sequence = row['sequence']
         smiles = row['SMILES']
+        ligand_id = row['ligand_id']
 
         yaml_content = make_yaml_contents(sequence, {'type': 'smiles', 'value': smiles})
         
-        yaml_file_path = yaml_dir_path / f'{acc}_{safe_name(protein_name)}.yaml'
+        yaml_file_path = yaml_dir_path / f'{acc}{file_delim}{pdb}{file_delim}{ligand_id}.yaml'
         with open(yaml_file_path, 'w', encoding='utf-8') as f:
             f.write(yaml_content)
-        print(f'Wrote YAML file for {protein_name} ({acc}) to {yaml_file_path}')
+    print(f'Wrote {len(yaml_data)} YAML file(s) to {yaml_dir_path}')
 
 
 def make_yaml_contents(protein_seq: str, ligand: dict) -> str:
