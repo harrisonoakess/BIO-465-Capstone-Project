@@ -98,7 +98,7 @@ def make_yaml_files(yaml_data, yaml_dir_name, num_files=None):
 
         yaml_content = make_yaml_contents(sequence, {'type': 'smiles', 'value': smiles})
         
-        yaml_file_path = yaml_dir_path / f'{acc}{file_delim}{pdb}{file_delim}{ligand_id}.yaml'
+        yaml_file_path = yaml_dir_path / f'{pdb}{file_delim}{ligand_id}.yaml'
         with open(yaml_file_path, 'w', encoding='utf-8') as f:
             f.write(yaml_content)
     print(f'Wrote {len(yaml_data)} YAML file(s) to {yaml_dir_path}')

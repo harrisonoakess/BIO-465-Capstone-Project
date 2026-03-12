@@ -28,15 +28,24 @@ def get_predictions(input_folder: str, file_names: list):
     confidence_list = []
 
     for file_name in file_names:
+
         stem = file_name.split(".")[0]
         
         pred_folder = prediction_loc / stem
         confidence_file = pred_folder / f"confidence_{stem}_model_0.json"
 
+        if not confidence_file.exists():
+            print(f"Confidence file not found for {stem}")
+            continue
+
         with open(confidence_file, "r") as f:
             confidence = json.load(f)
 
         affinity_file = pred_folder / f"affinity_{stem}.json"
+
+        if not affinity_file.exists():
+            print(f"Affinity file not found for {stem}")
+            continue
 
         with open(affinity_file, "r") as f:
             affinity = json.load(f)
@@ -47,7 +56,14 @@ def get_predictions(input_folder: str, file_names: list):
         protein_ligand_data = {'protein': protein_name, 'ligand': ligand_name}
         confidence = {**protein_ligand_data, **confidence, **affinity}
         confidence_list.append(confidence)
+
+    print(confidence_list)
         
+    for item in confidence_list:
+        affinity_pred_value = item.get("affinity_pred_value", "N/A")
+        micromolar_affinity_pred_value = 10 ** affinity_pred_value
+        item["micromolar_affinity_pred_value"] = micromolar_affinity_pred_value
+
     return confidence_list
 
 
@@ -65,8 +81,8 @@ def save_data_as_csv(input_folder: str, data: list):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--input_folder", type=str, required=True)
-    # ap.add_argument("--input_folder", type=str, default="paul_tests")
+    # ap.add_argument("--input_folder", type=str, required=True)
+    ap.add_argument("--input_folder", type=str, default="paul_with_NADPH")
     args = ap.parse_args()
 
     file_names = get_input_file_names(args.input_folder)

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=boltz_worker
-#SBATCH --time=08:00:00
+#SBATCH --time=02:00:00
 #SBATCH --partition=rai-gpu-grn
 #SBATCH --qos=rai-gpu-grn
 #SBATCH --account=rai
@@ -14,6 +14,8 @@ set -euo pipefail
 # Paths
 PROJECT_ROOT=${PROJECT_ROOT:-"/scratch/rai/vast1/stewartp"}
 YAML_LIST=${YAML_LIST:-"$PROJECT_ROOT/yaml_list.txt"}
+
+# UPDATE OUTPUT PATH HERE
 OUT_DIR="$PROJECT_ROOT/outputs/${SLURM_ARRAY_TASK_ID}"
 mkdir -p "$OUT_DIR"
 

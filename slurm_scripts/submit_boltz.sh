@@ -1,6 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=boltz_submit
 #SBATCH --time=00:10:00
+#SBATCH --cluster=granite
 #SBATCH --partition=rai-gpu-grn
 #SBATCH --qos=rai-gpu-grn
 #SBATCH --account=rai
@@ -10,7 +11,8 @@
 # Paths
 PROJECT_ROOT="/scratch/rai/vast1/stewartp"
 SCRIPT_DIR="/uufs/chpc.utah.edu/common/home/u6073678/Capstone/BIO-465-Capstone-Project/slurm_scripts"
-YAML_DIR="$PROJECT_ROOT/yamls"
+# UPDATE YAML DIRECTORY PATH HERE
+YAML_DIR="$PROJECT_ROOT/BIO-465-Capstone-Project/prep_files/boltz_ready/control_tests"
 
 # Create log directories
 mkdir -p "$PROJECT_ROOT/logs/boltz_array"
@@ -23,7 +25,7 @@ echo "Found $NUM_YAML YAML files in $YAML_DIR"
 echo "YAML list saved to $YAML_LIST"
 
 # SLURM array chunk size (must be <= 1000)
-CHUNK_SIZE=1000
+CHUNK_SIZE=50
 
 for (( i=0; i<$NUM_YAML; i+=CHUNK_SIZE )); do
     START=$i
@@ -34,7 +36,7 @@ for (( i=0; i<$NUM_YAML; i+=CHUNK_SIZE )); do
 
     echo "Submitting array tasks $START to $END"
 
-    sbatch --array=$START-$END%50 \
+    sbatch --array=$START-$END%5 \
            --export=ALL,PROJECT_ROOT="$PROJECT_ROOT",YAML_LIST="$YAML_LIST",SCRIPT_DIR="$SCRIPT_DIR" \
            --output="$PROJECT_ROOT/logs/boltz_array/task_%A_%a.log" \
            --error="$PROJECT_ROOT/logs/boltz_array/task_%A_%a.log" \
