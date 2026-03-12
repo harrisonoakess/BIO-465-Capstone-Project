@@ -36,11 +36,19 @@ def generate_heatmap(data, protein_var, affinity_var, title, x_label, y_label, o
                      cmap='viridis_r')
     
     cbar = ax.collections[0].colorbar
-    cbar.ax.set_title("Low Affinity", pad=8)
+
+    label_fs = 11
+    cbar.ax.text(
+        0.5, 1.025, "Low Affinity",
+        ha="center", va="bottom",
+        transform=cbar.ax.transAxes,
+        fontsize=label_fs
+    )
     cbar.ax.text(
         0.5, -0.025, "High Affinity",
         ha="center", va="top",
-        transform=cbar.ax.transAxes
+        transform=cbar.ax.transAxes,
+        fontsize=label_fs
     )
 
     plt.title(title)

@@ -5,17 +5,21 @@ import os
 
 # Input data directory
 DATA_DIR = "data"
+
 # Output directories
-PARSED_DIR = "parsed"
-BOLTZ_DIR = "../boltz_results"
+SCRATCH_DIR = "/scratch/rai/vast1/stewartp"
+PROTEOME_DIR = "${SCRATCH_DIR}/proteome_chunks"
+MSA_DIR = "${SCRATCH_DIR}/msa"
+BOLTZ_DIR = "${SCRATCH_DIR}/boltz_results"
 PLOTS_DIR = "../plots"
+FINAL_OUT_DIR = ""
 
 # Ensure output directories exist
-for d in [PARSED_DIR, BOLTZ_DIR, PLOTS_DIR]:
+for d in [PROTEOME_DIR, BOLTZ_DIR, PLOTS_DIR]:
     os.makedirs(d, exist_ok=True)
 
 # List all input files
-SAMPLES = glob_wildcards(os.path.join(DATA_DIR, "{sample}.txt")).sample
+SAMPLES = glob_wildcards(os.path.join(BOLTZ_DIR, "{protein}.txt")).sample
 
 # -------------------
 # RULES
