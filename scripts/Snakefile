@@ -1,76 +1,174 @@
-# ---------------------
-# CONFIGURATION
-# ---------------------
-import os
+import math
+import glob
 
-# Input data directory
-DATA_DIR = "data"
+configfile: "config.yaml"
 
-# Output directories
-SCRATCH_DIR = "/scratch/rai/vast1/stewartp"
-PROTEOME_DIR = "${SCRATCH_DIR}/proteome_chunks"
-MSA_DIR = "${SCRATCH_DIR}/msa"
-BOLTZ_DIR = "${SCRATCH_DIR}/boltz_results"
-PLOTS_DIR = "../plots"
-FINAL_OUT_DIR = ""
+CHUNK_DIR = config["dirs"]["chunks"]
+MSA_DIR = config["dirs"]["msa"]
+YAML_DIR = config["dirs"]["yaml"]
+BOLTZ_DIR = config["dirs"]["boltz"]
+INPUT_DIR = config["input_dir"]
 
-# Ensure output directories exist
-for d in [PROTEOME_DIR, BOLTZ_DIR, PLOTS_DIR]:
-    os.makedirs(d, exist_ok=True)
+LIGANDS = f"{INPUT_DIR}/ligands/all_ligands.csv"
 
-# List all input files
-SAMPLES = glob_wildcards(os.path.join(BOLTZ_DIR, "{protein}.txt")).sample
+BATCH_SIZE = 5
 
-# -------------------
-# RULES
-# -------------------
+# discover proteins from chunked FASTAs
+PROTEINS = glob_wildcards(f"{CHUNK_DIR}/{{protein}}.fasta").protein
+
+# load ligand ids
+with open(LIGANDS) as f:
+    LIGAND_IDS = [row.split(",")[0] for row in f.read().strip().split("\n")[1:]]
+
+N_BATCHES = math.ceil(len(LIGAND_IDS) / BATCH_SIZE)
+BATCHES = list(range(N_BATCHES))
+
+
+# --------------------------------------------------
+# Final targets
+# --------------------------------------------------
 
 rule all:
-    """
-    The final target rule that defines workflow outputs.
-    """
-    input: expand(os.path.join(PLOTS_DIR, "{sample}.png"), sample=SAMPLES)
-
-# --------------------
-# Download proteome
-# --------------------
-
-# ----------------------------------
-# Parse proteome into .yaml files
-# ----------------------------------
-rule parse_data:
     input:
-        raw=os.path.join(DATA_DIR, "{sample}.txt")
-    output: 
-        parsed=os.path.join(PARSED_DIR, "{sample}_parsed.txt")
+        expand(
+            f"{BOLTZ_DIR}/{{protein}}/batch_{{batch}}/complete.flag",
+            protein=PROTEINS,
+            batch=BATCHES
+        )
+
+
+# --------------------------------------------------
+# Download proteome
+# --------------------------------------------------
+
+rule download_proteome:
+    output:
+        f"{INPUT_DIR}/proteins/proteome.fasta"
+    threads: 1
     shell:
         """
-        # Replace with parsing command
-        python scripts/parse_data.py {input.raw} > {output.parsed}
-        
+        python download_proteome_fasta.py
         """
 
-# ----------------------------------
-# Generate proteome chunks for MSA
-# ----------------------------------
 
-# --------------------------------
-# Generate MSA for each protein
-# --------------------------------
+# --------------------------------------------------
+# Chunk proteome
+# --------------------------------------------------
 
-
-# ---------------------------------------
-# Run boltz on parsed data with MSAs
-# ---------------------------------------
-rule run_boltz:
+rule chunk_proteome:
     input:
-        parsed=os.path.join(PARSED_DIR, "{sample}_parsed.txt")
+        f"{INPUT_DIR}/proteins/proteome.fasta"
     output:
+        directory(CHUNK_DIR)
+    threads: 1
+    shell:
+        """
+        python chunk_proteome.py \
+            --fasta_file {input} \
+            --out_dir {output}
+        """
 
-# ------------------
-# Parse output
-# ------------------
 
-# ------------------
-# Generate plots 
-# ------------------
+# --------------------------------------------------
+# Generate MSA
+# --------------------------------------------------
+
+rule generate_msa:
+    input:
+        fasta=f"{CHUNK_DIR}/{{protein}}.fasta"
+    output:
+        f"{MSA_DIR}/{{protein}}_msa.a3m"
+    log:
+        f"logs/generate_msa/{{protein}}.log"
+    threads: 8
+    resources:
+        mem_mb=64000
+    shell:
+        """
+        bash ../slurm_scripts/generate_msa.sh {input.fasta} {output}
+        """
+
+
+# --------------------------------------------------
+# Generate YAML
+# --------------------------------------------------
+
+rule generate_yaml:
+    input:
+        fasta=f"{CHUNK_DIR}/{{protein}}.fasta",
+        msa=f"{MSA_DIR}/{{protein}}_msa.a3m"
+    output:
+        f"{YAML_DIR}/{{protein}}_{{ligand}}.yaml"
+    log:
+        f"logs/generate_yaml/{{protein}}_{{ligand}}.log"
+    params:
+        ligand_type=lookup(
+            query="ligand_id == '{ligand}'",
+            within=LIGANDS,
+            cols="type"
+        ),
+        ligand_value=lookup(
+            query="ligand_id == '{ligand}'",
+            within=LIGANDS,
+            cols="value"
+        )
+    threads: 1
+    shell:
+        """
+        python scripts/generate_yaml.py \
+            --fasta_file {input.fasta} \
+            --msa_file {input.msa} \
+            --ligand_id {wildcards.ligand} \
+            --ligand_type {params.ligand_type} \
+            --ligand_value "{params.ligand_value}" \
+            --output_yaml {output}
+        """
+
+
+# --------------------------------------------------
+# Run Boltz in batches (5 YAMLs per GPU job)
+# --------------------------------------------------
+
+rule run_boltz_batch:
+    input:
+        lambda wc: expand(
+            f"{YAML_DIR}/{wc.protein}_{{ligand}}.yaml",
+            ligand=LIGAND_IDS[
+                wc.batch * BATCH_SIZE :
+                (wc.batch + 1) * BATCH_SIZE
+            ]
+        )
+    output:
+        touch(f"{BOLTZ_DIR}/{{protein}}/batch_{{batch}}/complete.flag")
+    log:
+        f"logs/run_boltz_batch/{{protein}}_{{batch}}.log"
+    threads: 4
+    resources:
+        mem_mb=32000,
+        gpu=1
+    shell:
+        """
+        BATCH_DIR=$(dirname {output})
+        mkdir -p $BATCH_DIR
+
+        for yaml in {input}; do
+
+            name=$(basename $yaml .yaml)
+            OUT_DIR="{BOLTZ_DIR}/{wildcards.protein}/$name"
+
+            # skip if prediction already completed
+            if [ -f "$OUT_DIR/complete.flag" ]; then
+                echo "Skipping $name (already finished)"
+                continue
+            fi
+
+            mkdir -p "$OUT_DIR"
+
+            bash ../slurm_scripts/run_boltz.sh "$yaml" "$OUT_DIR" {threads}
+
+            touch "$OUT_DIR/complete.flag"
+
+        done
+
+        touch {output}
+        """

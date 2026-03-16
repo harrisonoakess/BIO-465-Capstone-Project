@@ -14,6 +14,7 @@ def generate_global_scatter_plot(data, confidence_var, affinity_var, title, x_la
     plt.savefig(output_file)
     plt.close()
 
+
 def generate_stereochemistry_sensitivity_plot(data, protein_var, ligand1, ligand2, affinity_var, title, x_label, y_label, output_file):
     pivoted_data = data.pivot(index=protein_var, columns='ligand', values=affinity_var)
 
@@ -26,6 +27,7 @@ def generate_stereochemistry_sensitivity_plot(data, protein_var, ligand1, ligand
     plt.savefig(output_file)
     plt.close()
 
+
 def generate_heatmap(data, protein_var, affinity_var, title, x_label, y_label, output_file):
     pivot_table = data.pivot(index=protein_var, columns='ligand', values=affinity_var)
 
@@ -36,20 +38,10 @@ def generate_heatmap(data, protein_var, affinity_var, title, x_label, y_label, o
                      cmap='viridis_r')
     
     cbar = ax.collections[0].colorbar
-
-    label_fs = 11
-    cbar.ax.text(
-        0.5, 1.025, "Low Affinity",
-        ha="center", va="bottom",
-        transform=cbar.ax.transAxes,
-        fontsize=label_fs
-    )
-    cbar.ax.text(
-        0.5, -0.025, "High Affinity",
-        ha="center", va="top",
-        transform=cbar.ax.transAxes,
-        fontsize=label_fs
-    )
+    cbar.ax.text(0.5, 1.025, "Low Affinity", ha="center", va="bottom",
+        transform=cbar.ax.transAxes, fontsize=11)
+    cbar.ax.text(0.5, -0.025, "High Affinity", ha="center", va="top",
+        transform=cbar.ax.transAxes, fontsize=11)
 
     plt.title(title)
     plt.tight_layout()
@@ -58,17 +50,20 @@ def generate_heatmap(data, protein_var, affinity_var, title, x_label, y_label, o
     plt.savefig(output_file)
     plt.close()
 
+
 def make_plot_folder(csv_file_name):
     plot_folder = Path(__file__).parent.parent.resolve() / "plots" / csv_file_name.split('.')[0]
     if not plot_folder.exists():
         plot_folder.mkdir()
     return plot_folder
 
+
 def add_protein_names(data, proteome_file):
     proteome_data = pd.read_csv(proteome_file)
     data = data.merge(proteome_data[['accession', 'protein_name']], left_on='protein', right_on='accession', how='left')
     data.drop(columns=['accession'], inplace=True)
     return data
+
 
 def main():
     ap = argparse.ArgumentParser()
