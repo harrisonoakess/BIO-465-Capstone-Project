@@ -1,21 +1,4 @@
 #!/usr/bin/env python3
-"""
-make_boltz_ready.py
-
-CHANGES (compared to your original):
-1) Added CLI args:
-   - --msa_base_dir (required): base folder where per-protein MSAs live
-   - --out_base_dir (optional): where to write boltz_ready output (default: boltz_ready)
-   - --require_msa (optional): if set, error if msa.a3m doesn't exist for a protein
-2) Updated make_yaml(...) to accept msa_path and write:
-      msa: <path>
-   under the protein block.
-3) Updated output directory creation to use --out_base_dir.
-4) In the YAML-writing loop, compute MSA path per protein:
-      <msa_base_dir>/<safe_accession>/msa.a3m
-   and pass it into make_yaml(...).
-"""
-
 import argparse
 import csv
 import random
@@ -56,7 +39,6 @@ def read_ceramides(csv_path: Path):
     return ligands
 
 
-# CHANGE #2: add msa_path param and write "msa: ..." into the protein block
 def make_yaml(protein_seq: str, msa_path: str, ligand: dict) -> str:
     lines = []
     lines.append("version: 1")
@@ -64,7 +46,7 @@ def make_yaml(protein_seq: str, msa_path: str, ligand: dict) -> str:
     lines.append("  - protein:")
     lines.append("      id: A")
     lines.append(f"      sequence: {protein_seq}")
-    lines.append(f"      msa: {msa_path}")  # <-- CHANGE: include MSA path
+    lines.append(f"      msa: {msa_path}")
     lines.append("  - ligand:")
     lines.append("      id: B")
 
@@ -74,14 +56,13 @@ def make_yaml(protein_seq: str, msa_path: str, ligand: dict) -> str:
         v = ligand["value"].replace("'", "''")
         lines.append(f"      smiles: '{v}'")
 
-    # Hard-coded NADPH ligand C
-    lines.append("  - ligand:")
-    lines.append("      id: C")
-    lines.append(f"      smiles: '{NADPH_SMILES}'")
+    # lines.append("  - ligand:")
+    # lines.append("      id: C")
+    # lines.append(f"      smiles: '{NADPH_SMILES}'")
 
     lines.append("properties:")
     lines.append("  - affinity:")
-    lines.append("      binder: B")  # must match ligand id
+    lines.append("      binder: B")
 
     return "\n".join(lines) + "\n"
 
@@ -93,14 +74,11 @@ def main():
     ap.add_argument("--output_dir_name", type=str)
     ap.add_argument("--random", action="store_true", help="randomly sample instead of first X/Y")
     ap.add_argument("--seed", type=int, default=7)
-
-    # CHANGE #1: new args for MSA + output base + optional strictness
     ap.add_argument(
         "--msa_base_dir",
         type=Path,
         required=True,
-        help="Base dir containing per-protein MSA folders (each should contain msa.a3m). "
-             "Example: /scratch/rai/vast1/stewartp/msa_per_protein/proteome",
+        help="Base dir containing per-protein MSA folders (each should contain msa.a3m).",
     )
     ap.add_argument(
         "--out_base_dir",
@@ -116,10 +94,15 @@ def main():
 
     args = ap.parse_args()
 
-    # Your existing relative-path behavior: looks for CSVs under scripts/output_files/
-    path = Path(__file__).parent / "output_files"
-    proteome_csv = path / args.proteome_csv
-    ceramides_csv = path / args.ceramide_csv
+    base_output = Path(__file__).parent / "output_files"
+
+    proteome_csv = args.proteome_csv
+    ceramides_csv = args.ceramide_csv
+
+    if not proteome_csv.is_absolute():
+        proteome_csv = base_output / proteome_csv
+    if not ceramides_csv.is_absolute():
+        ceramides_csv = base_output / ceramides_csv
 
     if not proteome_csv.exists():
         raise FileNotFoundError(f"Missing {proteome_csv}")
@@ -145,18 +128,16 @@ def main():
     else:
         run_name = datetime.now().strftime("run_%Y%m%d_%H%M%S")
 
-    # CHANGE #3: output folder now uses --out_base_dir
     out_dir = Path(args.out_base_dir) / run_name
     out_dir.mkdir(parents=True, exist_ok=True)
 
     msa_base = args.msa_base_dir
 
-    # CHANGE #4: compute per-protein msa path and pass it to make_yaml()
     n = 0
     file_delim = "__"
     for p in proteins:
         acc_safe = safe_name(p["accession"])
-        msa_file = (msa_base / acc_safe / "msa.a3m").resolve()
+        msa_file = msa_base / acc_safe / "msa.a3m"
 
         if args.require_msa and not msa_file.exists():
             raise FileNotFoundError(f"Missing MSA for {p['accession']}: {msa_file}")
@@ -164,7 +145,7 @@ def main():
         for c in ceramides:
             fname = f"{safe_name(p['accession'])}{file_delim}{safe_name(c['ligand_id'])}.yaml"
             (out_dir / fname).write_text(
-                make_yaml(p["sequence"], str(msa_file), c),
+                make_yaml(p["sequence"], str(msa_file.resolve()), c),
                 encoding="utf-8",
             )
             n += 1

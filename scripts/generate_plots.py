@@ -4,9 +4,15 @@ import pandas as pd
 import seaborn as sns
 from pathlib import Path
 
-def generate_global_scatter_plot(data, confidence_var, affinity_var, title, x_label, y_label, output_file):
+def generate_global_scatter_plot(data, confidence_var, affinity_var, ligand_var, title, x_label, y_label, output_file):
     plt.figure(figsize=(10, 6))
-    plt.scatter(data[confidence_var], data[affinity_var], alpha=0.5)
+    
+    ax = sns.scatterplot(
+            data=data, x=confidence_var, y=affinity_var,
+            hue=ligand_var, palette="tab20", alpha=0.6, s=50
+    )
+    ax.legend(title='Ligand')
+    
     plt.title(title)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
@@ -92,10 +98,12 @@ def main():
     confidence_var = 'ligand_iptm'
     # affinity_var = 'affinity_pred_value'
     affinity_var = 'micromolar_affinity_pred_value'
+    ligand_field = 'ligand'
 
-    generate_global_scatter_plot(data[[confidence_var, affinity_var]], 
+    generate_global_scatter_plot(data[[confidence_var, affinity_var, ligand_field]], 
                                  confidence_var, 
                                  affinity_var, 
+                                 ligand_field,
                                  'Global Scatter Plot of Ligand iPTM vs Affinity', 
                                  'Ligand iPTM', 
                                  'Affinity (micromolar)', 

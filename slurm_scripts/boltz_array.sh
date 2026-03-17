@@ -16,8 +16,12 @@ PROJECT_ROOT=${PROJECT_ROOT:-"/scratch/rai/vast1/stewartp"}
 YAML_LIST=${YAML_LIST:-"$PROJECT_ROOT/yaml_list.txt"}
 
 # UPDATE OUTPUT PATH HERE
-OUT_DIR="$PROJECT_ROOT/outputs/${SLURM_ARRAY_TASK_ID}"
+OUT_DIR="$PROJECT_ROOT/outputs/${JOB_NAME}"
 mkdir -p "$OUT_DIR"
+
+# # UPDATE OUTPUT PATH HERE
+# OUT_DIR="$PROJECT_ROOT/outputs/${SLURM_ARRAY_TASK_ID}"
+# mkdir -p "$OUT_DIR"
 
 # Pick YAML for this task
 YAML_FILE=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$YAML_LIST")
@@ -25,7 +29,7 @@ YAML_FILE=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$YAML_LIST")
 echo "----------------------------------------"
 echo "Running task $SLURM_ARRAY_TASK_ID on $(hostname)"
 echo "Processing YAML: $YAML_FILE"
-echo "Progress: $((SLURM_ARRAY_TASK_ID + 1)) / $TOTAL_YAMLS"
+# echo "Progress: $((SLURM_ARRAY_TASK_ID + 1)) / $TOTAL_YAMLS"
 echo "----------------------------------------"
 
 # Run Boltz

@@ -1,5 +1,18 @@
 #!/bin/bash
+#SBATCH --job-name=boltz_single
+#SBATCH --output=logs/single/boltz_run_%j.log
+#SBATCH --error=logs/single/boltz_run_%j.log
+#SBATCH --time=00:60:00
+#SBATCH --cluster=granite
+#SBATCH --partition=rai-gpu-grn
+#SBATCH --qos=rai-gpu-grn
+#SBATCH --account=rai
+#SBATCH --mem=32G
+
 set -euo pipefail
+
+module purge
+module load boltz2
 
 YAML_FILE="$1"
 OUT_DIR="$2"

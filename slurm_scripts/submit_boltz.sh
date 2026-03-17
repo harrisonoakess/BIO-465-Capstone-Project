@@ -9,10 +9,11 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 
 # Paths
-PROJECT_ROOT="/scratch/rai/vast1/stewartp"
+# PROJECT_ROOT="/scratch/rai/vast1/stewartp"
+PROJECT_ROOT="/uufs/chpc.utah.edu/common/home/u6073678/Capstone/BIO-465-Capstone-Project"
 SCRIPT_DIR="/uufs/chpc.utah.edu/common/home/u6073678/Capstone/BIO-465-Capstone-Project/slurm_scripts"
 # UPDATE YAML DIRECTORY PATH HERE
-YAML_DIR="$PROJECT_ROOT/BIO-465-Capstone-Project/prep_files/boltz_ready/control_tests"
+YAML_DIR="$PROJECT_ROOT/prep_files/boltz_ready/control_tests"
 
 # Create log directories
 mkdir -p "$PROJECT_ROOT/logs/boltz_array"

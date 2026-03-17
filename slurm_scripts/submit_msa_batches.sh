@@ -14,7 +14,7 @@ MSA_BASE="/scratch/rai/vast1/stewartp/msa_per_protein/random_proteins_and_pauls"
 # Load FASTA list once so we can map OFFSET->accessions deterministically
 mapfile -t FASTAS < <(ls -1 "$FASTA_DIR"/*.fasta | sort)
 
-OFFSET=1000
+OFFSET=2000
 while [ $OFFSET -lt $TOTAL_FILES ]; do
   COUNT=$BATCH_SIZE
   if [ $((OFFSET + COUNT)) -gt $TOTAL_FILES ]; then

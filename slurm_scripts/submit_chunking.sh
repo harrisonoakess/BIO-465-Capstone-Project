@@ -12,10 +12,20 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=4G
 
+set -euo pipefail 
+
 # Load Python module
 module purge
 module load python
 
+PROTEOME_FASTA="../inputs/proteins/proteome.fasta"
+OUT_DIR="/scratch/rai/vast1/stewartp/proteome_chunks"
+
+mkdir -p ../logs
+mkdir -p $OUT_DIR
+
 # Run the Python script
-python ../scripts/chunk_proteome.py
+python ../scripts/chunk_proteome.py \
+    --fasta_file $PROTEOME_FASTA    \
+    --out_dir $OUT_DIR
 
