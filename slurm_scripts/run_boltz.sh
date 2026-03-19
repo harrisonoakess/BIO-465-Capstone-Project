@@ -1,13 +1,14 @@
 #!/bin/bash
 #SBATCH --job-name=boltz_single
-#SBATCH --output=logs/single/boltz_run_%j.log
-#SBATCH --error=logs/single/boltz_run_%j.log
-#SBATCH --time=00:60:00
+#SBATCH --output=logs/boltz/boltz_run_%j.log
+#SBATCH --error=logs/boltz/boltz_run_%j.log
+#SBATCH --time=00:30:00
 #SBATCH --cluster=granite
 #SBATCH --partition=rai-gpu-grn
 #SBATCH --qos=rai-gpu-grn
 #SBATCH --account=rai
-#SBATCH --mem=32G
+#SBATCH --mem=16G
+#SBATCH --gres=gpu:h200:1
 
 set -euo pipefail
 

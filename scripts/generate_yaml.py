@@ -8,6 +8,8 @@ def safe_name(s: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]+", "_", s).strip("_")
 
 def read_fasta(fasta_file: Path):
+    print(f"[read_fasta] Reading FASTA: {fasta_file}")
+
     seq_lines = []
     name = fasta_file.stem
 
@@ -19,9 +21,13 @@ def read_fasta(fasta_file: Path):
 
     sequence = "".join(seq_lines)
 
+    print(f"[read_fasta] Parsed protein '{name}' (length={len(sequence)})")
+
     return name, sequence
 
 def make_yaml(protein_name, protein_seq, msa_path, ligand):
+    print(f"[make_yaml] Building YAML for protein={protein_name}, ligand={ligand['ligand_id']}")
+
     lines = []
 
     lines.append("version: 1")
@@ -37,8 +43,10 @@ def make_yaml(protein_name, protein_seq, msa_path, ligand):
     lines.append("      id: B")
 
     if ligand["type"] == "ccd":
+        print(f"[make_yaml] Ligand type=ccd, value={ligand['value']}")
         lines.append(f"      ccd: {ligand['value']}")
     else:
+        print(f"[make_yaml] Ligand type=smiles")
         v = ligand["value"].replace("'", "''")
         lines.append(f"      smiles: '{v}'")
 
@@ -68,6 +76,12 @@ def main():
 
     args = parser.parse_args()
 
+    print("\n[generate_yaml] Starting job")
+    print(f"[generate_yaml] FASTA: {args.fasta_file}")
+    print(f"[generate_yaml] MSA:   {args.msa_file}")
+    print(f"[generate_yaml] Ligand: id={args.ligand_id}, type={args.ligand_type}")
+    print(f"[generate_yaml] Output: {args.output_yaml}")
+
     protein_name, sequence = read_fasta(args.fasta_file)
 
     ligand = {
@@ -78,8 +92,12 @@ def main():
 
     yaml_text = make_yaml(protein_name, sequence, args.msa_file, ligand)
 
+    print(f"[generate_yaml] Writing YAML ({len(yaml_text)} chars)")
+
     args.output_yaml.parent.mkdir(parents=True, exist_ok=True)
     args.output_yaml.write_text(yaml_text)
+
+    print(f"[generate_yaml] Done: {args.output_yaml}\n")
 
 
 if __name__ == "__main__":

@@ -79,8 +79,8 @@ def fasta_to_csv(fasta_path: Path, csv_path: Path, limit: int = 0) -> int:
 
 
 def main():
-    fasta_path = Path("output_files/proteome.fasta")
-    csv_path = Path("output_files/proteome.csv")
+    fasta_path = Path("output_files/pisa_proteins.fasta")
+    csv_path = Path("/uufs/chpc.utah.edu/common/home/u6073676/Capstone/BIO-465-Capstone-Project/inputs/proteins/pisa_proteins.csv")
 
     if not fasta_path.exists():
         raise FileNotFoundError(

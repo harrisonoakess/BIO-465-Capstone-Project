@@ -1,4 +1,0 @@
-mkdir: cannot create directory ‘/scratch/rai/vast1/stewartp/logs/boltz_array’: Permission denied
-ls: cannot access '/scratch/rai/vast1/stewartp/BIO-465-Capstone-Project/prep_files/boltz_ready/control_tests/*.yaml': No such file or directory
-Found 0 YAML files in /scratch/rai/vast1/stewartp/BIO-465-Capstone-Project/prep_files/boltz_ready/control_tests
-YAML list saved to /scratch/rai/vast1/stewartp/yaml_list.txt

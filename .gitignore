@@ -1,4 +1,5 @@
 logs
+*.log
 outputs
 prep_files/output_files
 prep_files/boltz_ready
@@ -9,3 +10,4 @@ figs_and_images
 plots
 test_output
 scripts/prep_files
+scripts/.snakemake

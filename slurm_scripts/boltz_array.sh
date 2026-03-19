@@ -7,21 +7,23 @@
 #SBATCH --mail-user=aw998@byu.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --cpus-per-task=4
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:h200:1
+#SBATCH --mem=16G
 
 set -euo pipefail
+
+# module purge
+# module load boltz2
 
 # Paths
 PROJECT_ROOT=${PROJECT_ROOT:-"/scratch/rai/vast1/stewartp"}
 YAML_LIST=${YAML_LIST:-"$PROJECT_ROOT/yaml_list.txt"}
 
+echo "Yaml list path: $YAML_LIST"
+
 # UPDATE OUTPUT PATH HERE
 OUT_DIR="$PROJECT_ROOT/outputs/${JOB_NAME}"
 mkdir -p "$OUT_DIR"
-
-# # UPDATE OUTPUT PATH HERE
-# OUT_DIR="$PROJECT_ROOT/outputs/${SLURM_ARRAY_TASK_ID}"
-# mkdir -p "$OUT_DIR"
 
 # Pick YAML for this task
 YAML_FILE=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$YAML_LIST")

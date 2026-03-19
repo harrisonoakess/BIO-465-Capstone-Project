@@ -1,20 +1,26 @@
 import math
 import glob
+import csv
 
 configfile: "config.yaml"
 
-CHUNK_DIR = config["dirs"]["chunks"]
+FASTA_DIR = config["dirs"]["chunks"]
 MSA_DIR = config["dirs"]["msa"]
 YAML_DIR = config["dirs"]["yaml"]
 BOLTZ_DIR = config["dirs"]["boltz"]
 INPUT_DIR = config["input_dir"]
 
-LIGANDS = f"{INPUT_DIR}/ligands/all_ligands.csv"
+LIGANDS = f"{INPUT_DIR}/ligands/cancer_ligands.csv"
+LIGAND_INFO = {}
+with open(LIGANDS) as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        LIGAND_INFO[row["ligand_id"]] = row
 
 BATCH_SIZE = 5
 
 # discover proteins from chunked FASTAs
-PROTEINS = glob_wildcards(f"{CHUNK_DIR}/{{protein}}.fasta").protein
+PROTEINS = glob_wildcards(f"{FASTA_DIR}/{{protein}}.fasta").protein
 
 # load ligand ids
 with open(LIGANDS) as f:
@@ -22,7 +28,7 @@ with open(LIGANDS) as f:
 
 N_BATCHES = math.ceil(len(LIGAND_IDS) / BATCH_SIZE)
 BATCHES = list(range(N_BATCHES))
-
+print(f"Loaded {len(LIGAND_IDS)} ligands across {N_BATCHES} batches")
 
 # --------------------------------------------------
 # Final targets
@@ -36,86 +42,31 @@ rule all:
             batch=BATCHES
         )
 
-
-# --------------------------------------------------
-# Download proteome
-# --------------------------------------------------
-
-rule download_proteome:
-    output:
-        f"{INPUT_DIR}/proteins/proteome.fasta"
-    threads: 1
-    shell:
-        """
-        python download_proteome_fasta.py
-        """
-
-
-# --------------------------------------------------
-# Chunk proteome
-# --------------------------------------------------
-
-rule chunk_proteome:
-    input:
-        f"{INPUT_DIR}/proteins/proteome.fasta"
-    output:
-        directory(CHUNK_DIR)
-    threads: 1
-    shell:
-        """
-        python chunk_proteome.py \
-            --fasta_file {input} \
-            --out_dir {output}
-        """
-
-
-# --------------------------------------------------
-# Generate MSA
-# --------------------------------------------------
-
-rule generate_msa:
-    input:
-        fasta=f"{CHUNK_DIR}/{{protein}}.fasta"
-    output:
-        f"{MSA_DIR}/{{protein}}_msa.a3m"
-    log:
-        f"logs/generate_msa/{{protein}}.log"
-    threads: 8
-    resources:
-        mem_mb=64000
-    shell:
-        """
-        bash ../slurm_scripts/generate_msa.sh {input.fasta} {output}
-        """
-
-
 # --------------------------------------------------
 # Generate YAML
 # --------------------------------------------------
 
 rule generate_yaml:
     input:
-        fasta=f"{CHUNK_DIR}/{{protein}}.fasta",
-        msa=f"{MSA_DIR}/{{protein}}_msa.a3m"
+        fasta=f"{FASTA_DIR}/{{protein}}.fasta",
+        msa=f"{MSA_DIR}/{{protein}}/{{protein}}.a3m"
     output:
         f"{YAML_DIR}/{{protein}}_{{ligand}}.yaml"
     log:
         f"logs/generate_yaml/{{protein}}_{{ligand}}.log"
     params:
-        ligand_type=lookup(
-            query="ligand_id == '{ligand}'",
-            within=LIGANDS,
-            cols="type"
-        ),
-        ligand_value=lookup(
-            query="ligand_id == '{ligand}'",
-            within=LIGANDS,
-            cols="value"
-        )
+        ligand_type=lambda wc: LIGAND_INFO[wc.ligand]["type"],
+        ligand_value=lambda wc: LIGAND_INFO[wc.ligand]["value"]
     threads: 1
+    resources:
+        mem_mb=1000,
+        gpu=0,
+        gpu_flag=""
     shell:
         """
-        python scripts/generate_yaml.py \
+        set -euo pipefail
+
+        python generate_yaml.py \
             --fasta_file {input.fasta} \
             --msa_file {input.msa} \
             --ligand_id {wildcards.ligand} \
@@ -134,41 +85,27 @@ rule run_boltz_batch:
         lambda wc: expand(
             f"{YAML_DIR}/{wc.protein}_{{ligand}}.yaml",
             ligand=LIGAND_IDS[
-                wc.batch * BATCH_SIZE :
-                (wc.batch + 1) * BATCH_SIZE
+                int(wc.batch) * BATCH_SIZE :
+                (int(wc.batch) + 1) * BATCH_SIZE
             ]
         )
     output:
-        touch(f"{BOLTZ_DIR}/{{protein}}/batch_{{batch}}/complete.flag")
+        touch(f"{BOLTZ_DIR}/batch_{{protein}}_{{batch}}.flag")
     log:
         f"logs/run_boltz_batch/{{protein}}_{{batch}}.log"
-    threads: 4
+    threads: lambda wc: min(4, BATCH_SIZE)
     resources:
         mem_mb=32000,
-        gpu=1
+        gpu=1,
+        gpu_flag="--gres=gpu:h200:1"
     shell:
         """
-        BATCH_DIR=$(dirname {output})
-        mkdir -p $BATCH_DIR
-
-        for yaml in {input}; do
-
-            name=$(basename $yaml .yaml)
-            OUT_DIR="{BOLTZ_DIR}/{wildcards.protein}/$name"
-
-            # skip if prediction already completed
-            if [ -f "$OUT_DIR/complete.flag" ]; then
-                echo "Skipping $name (already finished)"
-                continue
-            fi
-
-            mkdir -p "$OUT_DIR"
-
-            bash ../slurm_scripts/run_boltz.sh "$yaml" "$OUT_DIR" {threads}
-
-            touch "$OUT_DIR/complete.flag"
-
-        done
+        scripts/run_boltz_batch.sh \
+            {wildcards.protein} \
+            {BOLTZ_DIR} \
+            {threads} \
+            {log} \
+            {input:q}
 
         touch {output}
         """

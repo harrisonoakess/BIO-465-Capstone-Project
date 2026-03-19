@@ -1,4 +1,0 @@
-Found 50 YAML files in /uufs/chpc.utah.edu/common/home/u6073678/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/control_tests
-YAML list saved to /uufs/chpc.utah.edu/common/home/u6073678/Capstone/BIO-465-Capstone-Project/yaml_list.txt
-Submitting array tasks 0 to 49
-/uufs/granite/sys/var/slurm/slurmd.spool/grn031//job937617/slurm_script: line 40: sbatch: command not found
