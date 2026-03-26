@@ -20,8 +20,8 @@ set -euo pipefail
 module --force purge
 module load colabfold/1.5.5-0525
 
-FASTA_DIR="/scratch/rai/vast1/stewartp/protein_fasta_files/random_proteins_and_pauls"
-MSA_BASE="/scratch/rai/vast1/stewartp/msa_per_protein/random_proteins_and_pauls"
+FASTA_DIR="/scratch/rai/vast1/stewartp/protein_fasta_files/pisa_proteins"
+MSA_BASE="/scratch/rai/vast1/stewartp/msa_per_protein/pisa_proteins"
 
 mkdir -p "$MSA_BASE"
 mkdir -p "/scratch/rai/vast1/stewartp/logs"

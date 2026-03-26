@@ -1,0 +1,21 @@
+jobs: 10
+executor: slurm
+
+# Prevent ANY real work on login node
+local-cores: 0
+
+# # Default resources (used unless overridden per rule)
+# default-resources:
+#   - partition=rai-gpu-grn
+#   - qos=rai-gpu-grn
+#   - account=rai
+#   - runtime=60
+#   - mem_mb=32000
+
+# General behavior
+rerun-incomplete: true
+latency-wait: 30
+keep-going: true
+
+# Optional but helpful
+printshellcmds: true

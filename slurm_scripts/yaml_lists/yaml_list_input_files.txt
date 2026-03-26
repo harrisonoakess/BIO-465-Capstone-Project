@@ -1,0 +1,6 @@
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/input_files/affinity.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/input_files/cyclic_prot.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/input_files/ligand.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/input_files/multimer.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/input_files/pocket.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/input_files/prot.yaml

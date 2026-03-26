@@ -8,13 +8,13 @@ SCRIPT="run_msa_per_protein.sh"
 PARTITION="rai-gpu-grn"
 JOBNAME="msa_per_protein"
 
-FASTA_DIR="/scratch/rai/vast1/stewartp/protein_fasta_files/random_proteins_and_pauls"
-MSA_BASE="/scratch/rai/vast1/stewartp/msa_per_protein/random_proteins_and_pauls"
+FASTA_DIR="/scratch/rai/vast1/stewartp/protein_fasta_files/pisa_proteins"
+MSA_BASE="/scratch/rai/vast1/stewartp/msa_per_protein/pisa_proteins"
 
 # Load FASTA list once so we can map OFFSET->accessions deterministically
 mapfile -t FASTAS < <(ls -1 "$FASTA_DIR"/*.fasta | sort)
 
-OFFSET=2000
+OFFSET=0
 while [ $OFFSET -lt $TOTAL_FILES ]; do
   COUNT=$BATCH_SIZE
   if [ $((OFFSET + COUNT)) -gt $TOTAL_FILES ]; then

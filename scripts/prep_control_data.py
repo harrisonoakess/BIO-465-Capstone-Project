@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from pathlib import Path
 import csv
@@ -5,9 +6,15 @@ import re
 import random
 import hashlib
 
-script_dir = Path(__file__).parent.resolve()
-data_dir = Path('../prep_files/output_files/')
-yaml_dir = Path('../prep_files/boltz_ready/')
+# script_dir = Path(__file__).parent.resolve()
+# data_dir = Path('../prep_files/output_files/')
+# yaml_dir = Path('../prep_files/boltz_ready/')
+
+PROJECT_ROOT = Path(os.environ["PROJECT_ROOT"])
+SCRIPT_DIR = Path(os.environ["SCRIPT_DIR"])
+YAML_DIR = Path(os.environ["YAML_DIR"])
+OUTPUT_DIR = Path(os.environ["OUTPUT_DIR"])
+SOURCE_DIR = Path(os.environ["SOURCE_DIR"])
 
 def safe_name(s: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]+", "_", s).strip("_")
@@ -24,9 +31,9 @@ def make_control_protein_ligand_csv(output_name):
     reference_name = 'pdb_chain_uniprot.csv'
     proteome_name = 'proteome.csv'
 
-    data = pd.read_csv(script_dir / data_dir / data_name)
-    reference = pd.read_csv(script_dir / data_dir / reference_name, comment='#', low_memory=False)
-    proteome = pd.read_csv(script_dir / data_dir / proteome_name)
+    data = pd.read_csv(SOURCE_DIR / data_name)
+    reference = pd.read_csv(SOURCE_DIR / reference_name, comment='#', low_memory=False)
+    proteome = pd.read_csv(SOURCE_DIR / proteome_name)
 
     data['PDB'] = data['PDB'].str.lower()
     reference['PDB'] = reference['PDB'].str.lower()
@@ -56,11 +63,12 @@ def make_control_protein_ligand_csv(output_name):
     output = output.dropna(subset=['sequence', 'ligand_id'])
     output = output[needed_cols]
     output = output.sort_values(by=needed_cols, ascending=True)
+    output = output.drop_duplicates(subset=needed_cols)
 
     print(f'Number of unique accessions in output: {output["accession"].nunique()}')
     print(f'Number of unique sequences in output: {output["sequence"].nunique()}')
 
-    output.to_csv(script_dir / data_dir / output_name, index=False)
+    output.to_csv(OUTPUT_DIR / output_name, index=False)
     print(f'Wrote {len(output)} control proteins to {output_name}')
 
 def read_yaml_data(csv_path: Path):
@@ -79,8 +87,7 @@ def read_yaml_data(csv_path: Path):
 
 
 def make_yaml_files(yaml_data, yaml_dir_name, num_files=None):
-    
-    yaml_dir_path = script_dir / yaml_dir / yaml_dir_name
+    yaml_dir_path = YAML_DIR / yaml_dir_name
     yaml_dir_path.mkdir(parents=True, exist_ok=True)
     file_delim = "__"
 
@@ -130,18 +137,18 @@ def make_yaml_contents(protein_seq: str, ligand: dict) -> str:
 def main():
     output_csv_name = 'control_proteins.csv'
 
-    if not (script_dir / data_dir / output_csv_name).exists():
+    if not (OUTPUT_DIR / output_csv_name).exists():
         make_control_protein_ligand_csv(output_csv_name)
 
     make_control_protein_ligand_csv(output_csv_name)
 
-    yaml_data = read_yaml_data(script_dir / data_dir / output_csv_name)
+    yaml_data = read_yaml_data(OUTPUT_DIR / output_csv_name)
     print(f'Read {len(yaml_data)} rows from {output_csv_name}')
 
     yaml_dir_name = 'control_tests'
-    make_yaml_files(yaml_data, yaml_dir_name, 50)
+    # make_yaml_files(yaml_data, yaml_dir_name, 100)
+    make_yaml_files(yaml_data, yaml_dir_name)
 
-    
+
 if __name__ == '__main__':
     main()
-

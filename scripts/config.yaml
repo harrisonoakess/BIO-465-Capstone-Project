@@ -3,7 +3,7 @@ chunk_size: 1
 input_dir: "../inputs"
 
 dirs:
-  chunks: "/scratch/rai/vast1/stewartp/protein_fasta_files/paul_proteome"
-  msa: "/scratch/rai/vast1/stewartp/msa_per_protein/paul_proteome"
+  fasta: "/scratch/rai/vast1/stewartp/protein_fasta_files/random_proteins_and_pauls"
+  msa: "/scratch/rai/vast1/stewartp/msa_per_protein/random_proteins_and_pauls"
   yaml: "/scratch/rai/vast1/stewartp/yaml"
-  boltz: "/scratch/rai/vast1/stewartp/boltz_results"
+  boltz: "/scratch/rai/vast1/stewartp/boltz_results/random_proteins_and_pauls"

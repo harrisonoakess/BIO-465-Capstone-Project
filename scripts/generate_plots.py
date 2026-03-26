@@ -99,6 +99,7 @@ def main():
     # affinity_var = 'affinity_pred_value'
     affinity_var = 'micromolar_affinity_pred_value'
     ligand_field = 'ligand'
+    
 
     generate_global_scatter_plot(data[[confidence_var, affinity_var, ligand_field]], 
                                  confidence_var, 

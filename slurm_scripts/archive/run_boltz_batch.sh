@@ -5,7 +5,7 @@ set -euo pipefail
 # Args
 # -----------------------------
 PROTEIN="$1"
-BOLTZ_DIR="$2"
+BOLTZ_DIR="$2"        # top-level predictions dir
 THREADS="$3"
 LOG_FILE="$4"
 shift 4
@@ -33,24 +33,18 @@ echo "======================================="
 # -----------------------------
 for yaml in "${YAMLS[@]}"; do
 
+    # Create a folder for this protein-ligand
     name=$(basename "$yaml" .yaml)
     OUT_DIR="${BOLTZ_DIR}/${name}"
-
-    echo "[run_boltz_batch] Processing: $name"
-
-    if [ -f "$OUT_DIR/complete.flag" ]; then
-        echo "[run_boltz_batch] Skipping $name (already finished)"
-        continue
-    fi
-
     mkdir -p "$OUT_DIR"
 
+    echo "[run_boltz_batch] Processing: $name"
     echo "[run_boltz_batch] Running Boltz..."
+
+    # Call the existing Boltz script
     bash ../slurm_scripts/run_boltz.sh "$yaml" "$OUT_DIR" "$THREADS"
 
-    touch "$OUT_DIR/complete.flag"
     echo "[run_boltz_batch] Completed: $name"
-
 done
 
 echo "[run_boltz_batch] Batch complete"

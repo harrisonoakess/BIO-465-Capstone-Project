@@ -1,0 +1,9 @@
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/random_plus_pauls_c16/P21817__CER_d18_1_16_0_C16.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/random_plus_pauls_c16/Q12955__CER_d18_1_16_0_C16.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/random_plus_pauls_c16/Q5T4S7__CER_d18_1_16_0_C16.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/random_plus_pauls_c16/Q7Z6Z7__CER_d18_1_16_0_C16.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/random_plus_pauls_c16/Q96M86__CER_d18_1_16_0_C16.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/random_plus_pauls_c16/Q99102__CER_d18_1_16_0_C16.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/random_plus_pauls_c16/Q9P2D7__CER_d18_1_16_0_C16.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/random_plus_pauls_c16/Q9Y4D8__CER_d18_1_16_0_C16.yaml
+/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/prep_files/boltz_ready/random_plus_pauls_c16/Q9Y6V0__CER_d18_1_16_0_C16.yaml

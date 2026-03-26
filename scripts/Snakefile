@@ -1,14 +1,16 @@
 import math
 import glob
 import csv
+import os
 
 configfile: "config.yaml"
 
-FASTA_DIR = config["dirs"]["chunks"]
+FASTA_DIR = config["dirs"]["fasta"]
 MSA_DIR = config["dirs"]["msa"]
 YAML_DIR = config["dirs"]["yaml"]
-BOLTZ_DIR = config["dirs"]["boltz"]
 INPUT_DIR = config["input_dir"]
+BOLTZ_DIR = config["dirs"]["boltz"]
+PREDICTIONS_DIR = os.path.join(BOLTZ_DIR, "predictions")
 
 LIGANDS = f"{INPUT_DIR}/ligands/cancer_ligands.csv"
 LIGAND_INFO = {}
@@ -26,20 +28,19 @@ PROTEINS = glob_wildcards(f"{FASTA_DIR}/{{protein}}.fasta").protein
 with open(LIGANDS) as f:
     LIGAND_IDS = [row.split(",")[0] for row in f.read().strip().split("\n")[1:]]
 
-N_BATCHES = math.ceil(len(LIGAND_IDS) / BATCH_SIZE)
-BATCHES = list(range(N_BATCHES))
-print(f"Loaded {len(LIGAND_IDS)} ligands across {N_BATCHES} batches")
+print(f"Loaded {len(LIGAND_IDS)} ligands")
 
 # --------------------------------------------------
 # Final targets
 # --------------------------------------------------
 
+# The new "all" rule points to each protein-ligand folder in predictions
 rule all:
     input:
         expand(
-            f"{BOLTZ_DIR}/{{protein}}/batch_{{batch}}/complete.flag",
+            os.path.join(PREDICTIONS_DIR, "{protein}_{ligand}"),
             protein=PROTEINS,
-            batch=BATCHES
+            ligand=LIGAND_IDS
         )
 
 # --------------------------------------------------
@@ -60,8 +61,10 @@ rule generate_yaml:
     threads: 1
     resources:
         mem_mb=1000,
-        gpu=0,
-        gpu_flag=""
+        runtime=10,
+        partition="granite",
+        qos="granite-freecycle",
+        account="stewartp"
     shell:
         """
         set -euo pipefail
@@ -72,40 +75,36 @@ rule generate_yaml:
             --ligand_id {wildcards.ligand} \
             --ligand_type {params.ligand_type} \
             --ligand_value "{params.ligand_value}" \
-            --output_yaml {output}
+            --output_yaml {output} \
+            > {log} 2>&1
         """
 
-
 # --------------------------------------------------
-# Run Boltz in batches (5 YAMLs per GPU job)
+# Run Boltz 
 # --------------------------------------------------
 
-rule run_boltz_batch:
+rule run_boltz:
     input:
-        lambda wc: expand(
-            f"{YAML_DIR}/{wc.protein}_{{ligand}}.yaml",
-            ligand=LIGAND_IDS[
-                int(wc.batch) * BATCH_SIZE :
-                (int(wc.batch) + 1) * BATCH_SIZE
-            ]
-        )
+        yaml=f"{YAML_DIR}/{{protein}}_{{ligand}}.yaml"
     output:
-        touch(f"{BOLTZ_DIR}/batch_{{protein}}_{{batch}}.flag")
+        directory(os.path.join(PREDICTIONS_DIR, "{protein}_{ligand}"))
     log:
-        f"logs/run_boltz_batch/{{protein}}_{{batch}}.log"
-    threads: lambda wc: min(4, BATCH_SIZE)
+        f"logs/run_boltz_batch/{{protein}}_{{ligand}}.log"
+    threads: 4
     resources:
         mem_mb=32000,
+        runtime=60,
         gpu=1,
-        gpu_flag="--gres=gpu:h200:1"
+        partition="rai-gpu-grn",
+        qos="rai-gpu-grn",
+        account="rai"
     shell:
         """
-        scripts/run_boltz_batch.sh \
-            {wildcards.protein} \
-            {BOLTZ_DIR} \
-            {threads} \
-            {log} \
-            {input:q}
+        set -euo pipefail
 
-        touch {output}
+        scripts/run_boltz.sh \
+            {input.yaml} \
+            {output} \
+            {threads} \
+            > {log} 2>&1
         """

@@ -31,7 +31,6 @@ boltz predict "$YAML_FILE" \
     --use_msa_server \
     --msa_server_url=http://colabfold01.int.chpc.utah.edu:8088 \
     --num_workers "$THREADS" \
-    --out_dir "$OUT_DIR" \
-    --override
+    --out_dir "$OUT_DIR"
 
 echo "Finished $YAML_FILE"
