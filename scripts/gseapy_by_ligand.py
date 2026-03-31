@@ -53,7 +53,7 @@ def run_enrichment(protein_list, gene_sets, outdir):
     return enr
 
 
-def plot_top_enrichment(results, outdir, p, top_n=15, x_col="Combined Score"):
+def plot_top_enrichment(results, outdir, p, ligand, top_n=15, x_col="Combined Score"):
     """
     Plot top enriched pathways.
     
@@ -100,7 +100,7 @@ def plot_top_enrichment(results, outdir, p, top_n=15, x_col="Combined Score"):
 
     plt.xlabel(xlabel_map.get(x_col, x_col))
     plt.ylabel("")
-    plt.title(f"Pathway Enrichment (Top {int(p*100)}% Predicted Binders)")
+    plt.title(f"{ligand} - Top {int(p*100)}% Predicted Binders")
     plt.tight_layout()
     plt.savefig(outdir / f"top_enrichment_barplot_{x_col.replace(' ', '_')}.png")
     plt.close()
@@ -137,39 +137,57 @@ def main():
     outdir = Path("../enrichment_analysis") / folder_name
     outdir.mkdir(parents=True, exist_ok=True)
 
-    # Loop over percentiles
-    for p in args.percentiles:
-        print(f"\nProcessing top {int(p*100)}% binders...")
-        good_df, cutoff = get_good_binders(
-            df,
-            affinity_col=args.affinity_col,
-            method=args.method,
-            value=p,
-            absolute_cutoff=args.absolute_cutoff
-        )
-        print(f"Cutoff used: {cutoff}")
-        print(f"Number of good binders: {len(good_df)}")
+    # Find ligands
+    ligands = df["ligand"].dropna().unique()
+    print(f"Found ligands: {ligands}")
+    
+    # Loop over ligands
+    for ligand in ligands:
+        print(f"\nProcessing ligand: {ligand}")
 
-        gene_list = good_df["gene_symbol"].dropna().unique().tolist()
-        print(f"Mapped to {len(gene_list)} gene symbols")
+        ligand_df = df[df["ligand"] == ligand]
 
-        if len(gene_list) == 0:
-            print("No valid gene symbols found. Skipping this percentile.")
+        if ligand_df.empty:
+            print("No data for this ligand, skipping.")
             continue
+        
+        # Create ligand-specific output folder
+        ligand_outdir = outdir / f"ligand_{ligand}"
+        ligand_outdir.mkdir(parents=True, exist_ok=True)
 
-        # Run enrichment
-        percentile_outdir = outdir / f"top_{int(p*100)}pct"
-        print("Running enrichment...")
-        enr = run_enrichment(gene_list, args.gene_sets, percentile_outdir)
+        # Loop over percentiles
+        for p in args.percentiles:
+            print(f"\nProcessing top {int(p*100)}% binders...")
+            good_df, cutoff = get_good_binders(
+                ligand_df,
+                affinity_col=args.affinity_col,
+                method=args.method,
+                value=p,
+                absolute_cutoff=args.absolute_cutoff
+            )
+            print(f"Cutoff used: {cutoff}")
+            print(f"Number of good binders: {len(good_df)}")
 
-        results = enr.results
-        if results is None or results.empty:
-            print("No enrichment results found for this percentile.")
-        else:
-            results_sorted = results.sort_values("Adjusted P-value")
-            results_sorted.to_csv(percentile_outdir / f"enrichment_top_{int(p*100)}pct.csv", index=False)
-            print(f"Saved results to {percentile_outdir / f'enrichment_top_{int(p*100)}pct.csv'}")
-            plot_top_enrichment(results_sorted, percentile_outdir, p, top_n=20, x_col=args.x_col)
+            gene_list = good_df["gene_symbol"].dropna().unique().tolist()
+            print(f"Mapped to {len(gene_list)} gene symbols")
+
+            if len(gene_list) == 0:
+                print("No valid gene symbols found. Skipping this percentile.")
+                continue
+
+            # Run enrichment
+            percentile_outdir = ligand_outdir / f"top_{int(p*100)}pct"
+            print("Running enrichment...")
+            enr = run_enrichment(gene_list, args.gene_sets, percentile_outdir)
+
+            results = enr.results
+            if results is None or results.empty:
+                print("No enrichment results found for this percentile.")
+            else:
+                results_sorted = results.sort_values("Adjusted P-value")
+                results_sorted.to_csv(percentile_outdir / f"enrichment_top_{int(p*100)}pct.csv", index=False)
+                print(f"Saved results to {percentile_outdir / f'enrichment_top_{int(p*100)}pct.csv'}")
+                plot_top_enrichment(results_sorted, percentile_outdir, p, ligand=ligand, top_n=20, x_col=args.x_col)
 
 
 if __name__ == "__main__":

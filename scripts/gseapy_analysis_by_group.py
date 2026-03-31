@@ -40,11 +40,14 @@ def map_to_gene_symbols(accessions):
     return mapping
 
 
-def run_enrichment(protein_list, gene_sets, outdir):
-    outdir.mkdir(parents=True, exist_ok=True)
+def run_enrichment(protein_list, outdir):
     enr = gp.enrichr(
         gene_list=protein_list,
-        gene_sets=gene_sets,
+        gene_sets=[
+            "GO_Biological_Process_2021",
+            "GO_Molecular_Function_2021",
+            "KEGG_2021_Human"
+        ],
         organism="homo sapiens",
         outdir=str(outdir),
         cutoff=0.05,   
@@ -115,21 +118,21 @@ def main():
     parser.add_argument("--percentiles", nargs="+", type=float, default=[0.01, 0.05, 0.10])
     parser.add_argument("--absolute_cutoff", type=float, default=None)
     parser.add_argument("--x_col", default="Combined Score")
-    parser.add_argument("--gene_sets", nargs="+", default=[
-            "GO_Biological_Process_2021",
-            "GO_Molecular_Function_2021",
-            "KEGG_2021_Human"
-        ])
+    parser.add_argument("--group_map", required=True, help="CSV mapping proteins to groups")
     args = parser.parse_args()
 
     # Load data
     df = pd.read_csv(args.csv)
 
-    # Map UniProt IDs to gene symbols
-    accessions = df["protein"].dropna().unique().tolist()
-    print(f"Mapping {len(accessions)} accessions to gene symbols...")
-    mapping = map_to_gene_symbols(accessions)
-    df["gene_symbol"] = df["protein"].map(mapping)
+    # Load group mapping
+    group_df = pd.read_csv(args.group_map)
+
+    # Merge with main dataframe
+    df = df.merge(group_df, on="protein", how="left")
+
+    # Drop proteins without group assignment
+    df = df.dropna(subset=["group"])
+    print(f"Groups found: {df['group'].unique()}")
 
     # Create output folder based on CSV name after "predictions_"
     csv_name = Path(args.csv).stem
@@ -137,40 +140,55 @@ def main():
     outdir = Path("../enrichment_analysis") / folder_name
     outdir.mkdir(parents=True, exist_ok=True)
 
-    # Loop over percentiles
-    for p in args.percentiles:
-        print(f"\nProcessing top {int(p*100)}% binders...")
-        good_df, cutoff = get_good_binders(
-            df,
-            affinity_col=args.affinity_col,
-            method=args.method,
-            value=p,
-            absolute_cutoff=args.absolute_cutoff
-        )
-        print(f"Cutoff used: {cutoff}")
-        print(f"Number of good binders: {len(good_df)}")
+    # Loop over biological groups
+    for group_name, subset_df in df.groupby("group"):
+        print(f"\n===== Processing group: {group_name} =====")
 
-        gene_list = good_df["gene_symbol"].dropna().unique().tolist()
-        print(f"Mapped to {len(gene_list)} gene symbols")
+        for p in args.percentiles:
+            print(f"\nProcessing top {int(p*100)}% binders...")
+            
+            good_df, cutoff = get_good_binders(
+                subset_df,
+                affinity_col=args.affinity_col,
+                method=args.method,
+                value=p,
+                absolute_cutoff=args.absolute_cutoff
+            )
 
-        if len(gene_list) == 0:
-            print("No valid gene symbols found. Skipping this percentile.")
-            continue
+            print(f"Cutoff used: {cutoff}")
+            print(f"Number of good binders: {len(good_df)}")
 
-        # Run enrichment
-        percentile_outdir = outdir / f"top_{int(p*100)}pct"
-        print("Running enrichment...")
-        enr = run_enrichment(gene_list, args.gene_sets, percentile_outdir)
+            gene_list = good_df["gene_symbol"].dropna().unique().tolist()
+            print(f"Mapped to {len(gene_list)} gene symbols")
 
-        results = enr.results
-        if results is None or results.empty:
-            print("No enrichment results found for this percentile.")
-        else:
-            results_sorted = results.sort_values("Adjusted P-value")
-            results_sorted.to_csv(percentile_outdir / f"enrichment_top_{int(p*100)}pct.csv", index=False)
-            print(f"Saved results to {percentile_outdir / f'enrichment_top_{int(p*100)}pct.csv'}")
-            plot_top_enrichment(results_sorted, percentile_outdir, p, top_n=20, x_col=args.x_col)
+            if len(gene_list) == 0:
+                print("No valid gene symbols found. Skipping.")
+                continue
 
+            # Group-specific output folder
+            percentile_outdir = outdir / group_name / f"top_{int(p*100)}pct"
+            percentile_outdir.mkdir(parents=True, exist_ok=True)
+
+            print("Running enrichment...")
+            enr = run_enrichment(gene_list, percentile_outdir)
+
+            results = enr.results
+            if results is None or results.empty:
+                print("No enrichment results found.")
+            else:
+                results_sorted = results.sort_values("Adjusted P-value")
+                results_sorted.to_csv(
+                    percentile_outdir / f"enrichment_{group_name}_top_{int(p*100)}pct.csv",
+                    index=False
+                )
+
+                plot_top_enrichment(
+                    results_sorted,
+                    percentile_outdir,
+                    p,
+                    top_n=20,
+                    x_col=args.x_col
+                )
 
 if __name__ == "__main__":
     main()

@@ -1,3 +1,4 @@
+import os
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,7 +7,7 @@ from pathlib import Path
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", required=True, help="Path to input CSV")
-    parser.add_argument("--output", default="affinity_histogram.png", help="Output plot file")
+    parser.add_argument("--output", default="affinity_histogram.png", help="Output plot filename")
     parser.add_argument("--bins", type=int, default=30, help="Number of histogram bins")
     parser.add_argument("--log", action="store_true", help="Use log scale on x-axis")
     args = parser.parse_args()
@@ -20,6 +21,8 @@ def main():
         raise ValueError(f"Column '{affinity_col}' not found in CSV")
 
     data = df[affinity_col].dropna()
+
+    output = os.path.join("/uufs/chpc.utah.edu/common/home/u6073678/Capstone/BIO-465-Capstone-Project/plots", args.output)
 
     # Plot
     plt.figure(figsize=(10, 6))
@@ -36,10 +39,10 @@ def main():
     plt.grid(True, linestyle="--", alpha=0.5)
 
     plt.tight_layout()
-    plt.savefig(args.output)
+    plt.savefig(output)
     plt.close()
 
-    print(f"Saved histogram to {args.output}")
+    print(f"Saved histogram to {output}")
 
 
 if __name__ == "__main__":

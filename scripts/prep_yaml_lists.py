@@ -1,6 +1,7 @@
 import os
-from pathlib import Path
+import shutil
 import argparse
+from pathlib import Path
 
 YAML_DIR = Path(os.environ["YAML_DIR"])
 OUTPUT_DIR = Path(os.environ["OUTPUT_DIR"])
@@ -21,12 +22,15 @@ def get_list_finished_yaml_files(output_folder: Path):
 
         if prediction_successful(pred_folder):
             finished_yaml_files.append(yaml_file_path)
-       
+
     return finished_yaml_files
 
 
 def prediction_successful(pred_folder: Path):
     # Check if prediction folder contains confidence and affinity files
+
+    # pred_folder should be in the form:
+    # .../boltz_results_{job_name}/predictions/{job_name}/
 
     confidence_file = pred_folder / f"confidence_{pred_folder.name}_model_0.json"
     affinity_file = pred_folder / f"affinity_{pred_folder.name}.json"
@@ -42,13 +46,11 @@ def process_output_folder(output_folder: Path, verbose: bool = False):
 
     folder_name = output_folder.name
 
+    if not output_folder.exists():
+        raise FileNotFoundError(f"Error: Output folder '{folder_name}' does not exist.")
+        
     if not output_folder.is_dir():
         raise NotADirectoryError(f"Error: Output folder '{folder_name}' is not a valid directory.")
-        
-    elif not output_folder.exists():
-        raise FileNotFoundError(f"Error: Output folder '{folder_name}' does not exist.")
-
-    # print(f"Checking output folder '{folder_name}' for completed predictions...")
 
     finished_yaml_files = get_list_finished_yaml_files(output_folder)
 
@@ -56,11 +58,14 @@ def process_output_folder(output_folder: Path, verbose: bool = False):
     input_yaml_files = get_input_yaml_files(job_name)
 
     if verbose:
+        n_finished = len(finished_yaml_files)
+        n_total = len(input_yaml_files)
+        
         report = f"Prediction Status {folder_name}:"
-        report += f"\n\tFinished: {len(finished_yaml_files)}"
-        report += f"\tUnfinished: {len(input_yaml_files) - len(finished_yaml_files)}"
-        report += f"\tTotal: {len(input_yaml_files)}"
-        report += f"\tPercentage: {len(finished_yaml_files) / len(input_yaml_files) * 100:.2f}%"
+        report += f"\n\tFinished: {n_finished}"
+        report += f"\tUnfinished: {n_total - n_finished}"
+        report += f"\tTotal: {n_total}"
+        report += f"\tPercentage: {n_finished / n_total * 100:.2f}%"
         print(report)
 
     return finished_yaml_files, input_yaml_files
@@ -101,14 +106,47 @@ def get_input_yaml_files(input_folder: str):
     return yaml_files
 
 
+def remove_unfinished_output_folders(output_folder: Path, dry_run: bool = False, verbose: bool = False):
+    partially_completed = []
+
+    for boltz_results_folder in output_folder.iterdir():
+        if not boltz_results_folder.is_dir():
+            continue
+        if not boltz_results_folder.name.startswith("boltz_results_"):
+            continue
+
+        prediction_name = boltz_results_folder.name.split("boltz_results_")[-1]
+
+        pred_folder = boltz_results_folder / "predictions" / prediction_name
+
+        if not prediction_successful(pred_folder):
+            partially_completed.append(boltz_results_folder)            
+            if not dry_run:
+                shutil.rmtree(boltz_results_folder)
+
+        
+    if verbose and partially_completed:
+        num_partially_completed = len(partially_completed)
+        print(f"{num_partially_completed} partially completed predictions in {output_folder.name}:")
+        for folder in partially_completed:
+            if not dry_run:
+                print(f"\tDeleting: {folder.name}")
+            else:
+                print(f"\tWould delete: {folder.name}")
+
+    if verbose and not partially_completed:
+        print(f"No partially completed predictions found in {output_folder.name}.")
+
+
 def main():
     ap = argparse.ArgumentParser()
-    # ap.add_argument("--input_folder", type=str, required=True)
     ap.add_argument("--output_folder", type=str, nargs="+")
     ap.add_argument("--process_all", action="store_true")
     # ap.add_argument("--process_all", action="store_true", default=True)
     ap.add_argument("--create_list", action="store_true", help="Create list of unfinished YAML files for supplemental predictions")
     # ap.add_argument("--create_list", action="store_true", default=True)
+    ap.add_argument("--remove_unfinished", action="store_true", help="Remove output folders without successful predictions")
+    ap.add_argument("--dry_run", action="store_true")
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args()
 
@@ -135,7 +173,8 @@ def main():
         finished_yaml_files, input_yaml_files = process_output_folder(folder_path, verbose=args.verbose)
         if args.create_list:
             create_yaml_list(finished_yaml_files, input_yaml_files, folder_path.name)
-
+        if args.remove_unfinished:
+            remove_unfinished_output_folders(folder_path, dry_run=args.dry_run, verbose=args.verbose)
 
 if __name__ == "__main__":
     main()

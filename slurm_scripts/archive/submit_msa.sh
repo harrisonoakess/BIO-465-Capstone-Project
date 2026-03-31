@@ -11,24 +11,34 @@ SAFE_LIMIT=1   # Set to 1 if unsure; adjust if CHPC tells you more
 
 OFFSET=0
 
-while [ $OFFSET -lt $TOTAL_FILES ]; do
-    while true; do
-        # Count current jobs in the partition for your user
-        NUM_JOBS=$(squeue -u $USER -p kingspeak | wc -l)
-        NUM_JOBS=$((NUM_JOBS - 1))  # subtract header line
+#!/bin/bash
+# submit_msa_safe.sh
+# Safely submit all batches without hitting the 1000-job limit
 
-        if [ "$NUM_JOBS" -lt "$SAFE_LIMIT" ]; then
+TOTAL_FILES=20416
+BATCH_SIZE=500
+SCRIPT="run_msa.sh"
+MAX_JOBS=1000
+
+OFFSET=0
+
+while [ "$OFFSET" -lt "$TOTAL_FILES" ]; do
+    while true; do
+        NUM_JOBS=$(squeue -u "$USER" -h -p kingspeak | wc -l)
+
+        # Only submit if there is room for the next batch
+        if [ $((NUM_JOBS + BATCH_SIZE)) -le "$MAX_JOBS" ]; then
             break
         fi
 
-        echo "Max jobs reached ($NUM_JOBS). Waiting 60 seconds..."
+        echo "Currently $NUM_JOBS jobs in queue. Waiting 60 seconds..."
         sleep 60
     done
 
     echo "Submitting batch with OFFSET=$OFFSET"
-    sbatch --export=OFFSET=$OFFSET "$SCRIPT"
+    sbatch --export=OFFSET="$OFFSET" "$SCRIPT"
 
     OFFSET=$((OFFSET + BATCH_SIZE))
 done
 
-echo "All batches submitted (or in progress)."
+echo "All batches submitted."

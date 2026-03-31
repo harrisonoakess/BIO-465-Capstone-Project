@@ -1,17 +1,16 @@
 #!/bin/bash
 set -u
 
-TOTAL_FILES=2041
+TOTAL_FILES=20416
 BATCH_SIZE=1000
 TASK_LIMIT=950
 SCRIPT="run_msa_per_protein.sh"
 PARTITION="rai-gpu-grn"
 JOBNAME="msa_per_protein"
 
-FASTA_DIR="/scratch/rai/vast1/stewartp/protein_fasta_files/pisa_proteins"
-MSA_BASE="/scratch/rai/vast1/stewartp/msa_per_protein/pisa_proteins"
+FASTA_DIR="/scratch/rai/vast1/stewartp/protein_fasta_files/proteome"
+MSA_BASE="/scratch/rai/vast1/stewartp/msa_per_protein/proteome"
 
-# Load FASTA list once so we can map OFFSET->accessions deterministically
 mapfile -t FASTAS < <(ls -1 "$FASTA_DIR"/*.fasta | sort)
 
 OFFSET=0
@@ -24,7 +23,6 @@ while [ $OFFSET -lt $TOTAL_FILES ]; do
   START=$OFFSET
   END_GLOBAL=$((OFFSET + COUNT - 1))
 
-  # ---- Batch completion check ----
   done_count=0
   for ((i=START; i<=END_GLOBAL; i++)); do
     fasta="${FASTAS[$i]:-}"
@@ -43,7 +41,6 @@ while [ $OFFSET -lt $TOTAL_FILES ]; do
     echo "Batch $START-$END_GLOBAL incomplete ($done_count/$COUNT). Submitting..."
   fi
 
-  # ---- Wait for task limit ----
   while true; do
     TASKS=$(squeue -u "$USER" -p "$PARTITION" -n "$JOBNAME" -h -r | wc -l)
     if [ "$TASKS" -le "$TASK_LIMIT" ]; then
@@ -53,7 +50,6 @@ while [ $OFFSET -lt $TOTAL_FILES ]; do
     sleep 60
   done
 
-  # Submit as 0-based array with OFFSET
   END_LOCAL=$((COUNT - 1))
   while true; do
     OUT=$(sbatch --export=ALL,OFFSET=$START --array=0-$END_LOCAL "$SCRIPT" 2>&1)

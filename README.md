@@ -67,13 +67,3 @@ Ceramide inputs should be stored in a reproducible file format so they can be re
 A likely approach is to keep ligand information in a dedicated CSV file, then reference it when generating YAML files.
 
 ---
-
-
-```text
-project-root/
-├── scripts/
-└── files/
-    ├── ligand_csv/
-    ├── protein_csv/
-    ├── yaml/
-    └── fasta_files/

@@ -12,3 +12,5 @@ test_output
 scripts/prep_files
 scripts/.snakemake
 .venv/
+enrichment_analysis/
+processed_outputs

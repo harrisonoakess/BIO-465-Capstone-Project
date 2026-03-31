@@ -26,18 +26,18 @@ if [ "$YAML_PER_JOB" -gt 1 ]; then
     for ((i = yaml_index_start; i <= yaml_index_end; i++)); do
         YAML_FILE=$(sed -n "$((i + 1))p" "$YAML_LIST")
         echo "Processing YAML: $YAML_FILE"
-        boltz predict "$YAML_FILE" \
-            --num_workers 4 \
-            --out_dir "$OUTPUT_DIR" \
-            # --override
-
-
         # boltz predict "$YAML_FILE" \
-        #     --use_msa_server \
-        #     --msa_server_url=http://colabfold01.int.chpc.utah.edu:8088 \
         #     --num_workers 4 \
         #     --out_dir "$OUTPUT_DIR" \
         #     # --override
+
+
+        boltz predict "$YAML_FILE" \
+            --use_msa_server \
+            --msa_server_url=http://colabfold01.int.chpc.utah.edu:8088 \
+            --num_workers 4 \
+            --out_dir "$OUTPUT_DIR" \
+            # --override
 
         echo "Completed YAML: $YAML_FILE"
         echo "----------------------------------------"

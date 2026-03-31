@@ -72,7 +72,7 @@ sbatch \
     --time=01:30:00 \
     --cpus-per-task=4 \
     --gres=gpu:h200:1 \
-    --mem=64G \
+    --mem=256G \
     --cluster=granite \
     --partition=rai-gpu-grn \
     --qos=rai-gpu-grn \
