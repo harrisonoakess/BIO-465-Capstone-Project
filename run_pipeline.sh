@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
-import os
-from pathlib import Path
-import subprocess 
 
 set -euo pipefail
+module load python
 
 echo "Starting pipeline..."
 
@@ -25,6 +23,7 @@ done
 # Put your ligands CSV file in inputs/ligands
 # Optionally place a custom proteins CSV file in inputs/proteins
 # Otherwise the proteome will be downloaded
+PROJECT_ROOT="."
 PROTEIN_DIR="inputs/proteins"
 LIGAND_DIR="inputs/ligands"
 YAML_DIR="/scratch/rai/vast1/stewartp/yaml"
@@ -127,14 +126,14 @@ echo "Step 5 complete: CSV files created."
 echo "Running enrichment analysis..."
 
 ENRICH_SCRIPT="scripts/gseapy_ORA_analysis.py"
-PROCESSED_DIR="$PROCESSED_DIR:-processed_outputs"
+PROCESSED_DIR="$PROCESSED_DIR"
 
 for csv_file in "$PROCESSED_DIR"/*.csv; do 
     echo "Processing CSV: $csv_file"
 
     if [ "$DRY_RUN" -eq 1 ]; then 
         echo "[DRY RUN] Would run enrichment for $csv_file for all proteins"
-        echo "[DRY RUN] Would drun enrichment for $csv_file split by ligand"
+        echo "[DRY RUN] Would run enrichment for $csv_file split by ligand"
     else 
         echo "Running enrichment for all proteins..."
         python "$ENRICH_SCRIPT" --csv "$csv_file" --by_ligand False
@@ -145,26 +144,3 @@ for csv_file in "$PROCESSED_DIR"/*.csv; do
     echo "Finished processing $csv_file"
 done
 echo "Step 6 complete: Enrichment analysis done."
-
-# Step 7: Generate all boxplots
-PROCESSED_DIR="$PROJECT_ROOT/processed_outputs"
-SOURCE_DIR="$PROJECT_ROOT/source"
-
-target_csvs=("human_pisa_proteins.csv" "paul_proteins_2.csv")
-random_csvs=("2000_random_proteins.csv")
-
-# Find all processed CSVs
-processed_csvs=()
-for f in "$PROCESSED_DIR"/*.csv; do
-    processed_csvs+=("$f")
-done
-
-# Build command
-cmd=(python scripts/plot_affinity.py --target_csvs "${target_csvs[@]}" --random_csvs "${random_csvs[@]}" --processed_csvs "${processed_csvs[@]}" --by_ligand --show_stats)
-
-if [ "$DRY_RUN" -eq 1 ]; then
-    echo "[DRY RUN] Would run:"
-    echo "${cmd[@]}"
-else
-    "${cmd[@]}"
-fi
