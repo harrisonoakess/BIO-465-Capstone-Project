@@ -11,7 +11,7 @@ def read_fasta(fasta_file: Path):
     print(f"[read_fasta] Reading FASTA: {fasta_file}")
 
     seq_lines = []
-    name = fasta_file.stem
+    name = safe_name(fasta_file.stem)
 
     with open(fasta_file) as f:
         for line in f:
@@ -25,7 +25,7 @@ def read_fasta(fasta_file: Path):
 
     return name, sequence
 
-def make_yaml(protein_name, protein_seq, msa_path, ligand):
+def make_yaml(protein_name, protein_seq, ligand):
     print(f"[make_yaml] Building YAML for protein={protein_name}, ligand={ligand['ligand_id']}")
 
     lines = []
@@ -37,8 +37,6 @@ def make_yaml(protein_name, protein_seq, msa_path, ligand):
     lines.append("  - protein:")
     lines.append("      id: A")
     lines.append(f"      sequence: {protein_seq}")
-    lines.append(f"      msa: {msa_path}")
-
     lines.append("  - ligand:")
     lines.append("      id: B")
 
@@ -66,8 +64,6 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--fasta_file", type=Path, required=True)
-    parser.add_argument("--msa_file", type=Path, required=True)
-
     parser.add_argument("--ligand_id", required=True)
     parser.add_argument("--ligand_type", required=True)
     parser.add_argument("--ligand_value", required=True)
@@ -78,7 +74,6 @@ def main():
 
     print("\n[generate_yaml] Starting job")
     print(f"[generate_yaml] FASTA: {args.fasta_file}")
-    print(f"[generate_yaml] MSA:   {args.msa_file}")
     print(f"[generate_yaml] Ligand: id={args.ligand_id}, type={args.ligand_type}")
     print(f"[generate_yaml] Output: {args.output_yaml}")
 
@@ -90,7 +85,7 @@ def main():
         "value": args.ligand_value
     }
 
-    yaml_text = make_yaml(protein_name, sequence, args.msa_file, ligand)
+    yaml_text = make_yaml(protein_name, sequence, ligand)
 
     print(f"[generate_yaml] Writing YAML ({len(yaml_text)} chars)")
 

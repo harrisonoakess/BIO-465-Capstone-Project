@@ -1,16 +1,16 @@
-import math
 import glob
 import csv
 import os
 
-configfile: "config.yaml"
+configfile: "config/config.yaml"
 
 FASTA_DIR = config["dirs"]["fasta"]
 MSA_DIR = config["dirs"]["msa"]
 YAML_DIR = config["dirs"]["yaml"]
-INPUT_DIR = config["input_dir"]
+INPUT_DIR = config["dirs"]["input"]
 BOLTZ_DIR = config["dirs"]["boltz"]
 PREDICTIONS_DIR = os.path.join(BOLTZ_DIR, "predictions")
+
 
 LIGANDS = f"{INPUT_DIR}/ligands/cancer_ligands.csv"
 LIGAND_INFO = {}
@@ -19,22 +19,13 @@ with open(LIGANDS) as f:
     for row in reader:
         LIGAND_INFO[row["ligand_id"]] = row
 
-BATCH_SIZE = 5
+LIGAND_IDS = list(LIGAND_INFO.keys())
+PROTEINS = [Path(f).stem for f in glob.glob(os.path.join(FASTA_DIR, "*.fasta"))]
 
-# discover proteins from chunked FASTAs
-PROTEINS = glob_wildcards(f"{FASTA_DIR}/{{protein}}.fasta").protein
-
-# load ligand ids
-with open(LIGANDS) as f:
-    LIGAND_IDS = [row.split(",")[0] for row in f.read().strip().split("\n")[1:]]
-
+print(f"Loaded {len(PROTEINS)} proteins")
 print(f"Loaded {len(LIGAND_IDS)} ligands")
 
-# --------------------------------------------------
-# Final targets
-# --------------------------------------------------
 
-# The new "all" rule points to each protein-ligand folder in predictions
 rule all:
     input:
         expand(
@@ -43,16 +34,12 @@ rule all:
             ligand=LIGAND_IDS
         )
 
-# --------------------------------------------------
-# Generate YAML
-# --------------------------------------------------
-
 rule generate_yaml:
     input:
         fasta=f"{FASTA_DIR}/{{protein}}.fasta",
-        msa=f"{MSA_DIR}/{{protein}}/{{protein}}.a3m"
+        msa=lambda wc: f"{MSA_DIR}/{wc.protein}/msa.a3m" if os.path.exists(f"{MSA_DIR}/{wc.protein}/msa.a3m") else [],
     output:
-        f"{YAML_DIR}/{{protein}}_{{ligand}}.yaml"
+        yaml=f"{YAML_DIR}/{{protein}}_{{ligand}}.yaml"
     log:
         f"logs/generate_yaml/{{protein}}_{{ligand}}.log"
     params:
@@ -61,27 +48,25 @@ rule generate_yaml:
     threads: 1
     resources:
         mem_mb=1000,
-        runtime=10,
-        partition="granite",
-        qos="granite-freecycle",
-        account="stewartp"
+        runtime=10
     shell:
-        """
+        r"""
         set -euo pipefail
 
+        msa_arg=""
+        if [[ -f {input.msa} ]]; then
+            msa_arg="--msa_file {input.msa}"
+        fi
+        
         python generate_yaml.py \
             --fasta_file {input.fasta} \
-            --msa_file {input.msa} \
+            $msa_arg \
             --ligand_id {wildcards.ligand} \
-            --ligand_type {params.ligand_type} \
+            --ligand_type "{params.ligand_type}" \
             --ligand_value "{params.ligand_value}" \
-            --output_yaml {output} \
+            --output_yaml {output.yaml} \
             > {log} 2>&1
         """
-
-# --------------------------------------------------
-# Run Boltz 
-# --------------------------------------------------
 
 rule run_boltz:
     input:
@@ -95,11 +80,12 @@ rule run_boltz:
         mem_mb=32000,
         runtime=60,
         gpu=1,
-        partition="rai-gpu-grn",
-        qos="rai-gpu-grn",
-        account="rai"
+        slurm_partition="rai-gpu-grn",
+        slurm_account="rai",
+        slurm_qos="rai-gpu-grn"
+        slurm_extra="--gres=gpu:h200:1"
     shell:
-        """
+        r"""
         set -euo pipefail
 
         scripts/run_boltz.sh \

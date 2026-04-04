@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import requests
+import argparse
 
 UNIPROT_STREAM_URL = "https://rest.uniprot.org/uniprotkb/stream"
 
@@ -14,19 +15,29 @@ def download_proteome_fasta(proteome_id: str, out_path: Path) -> None:
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
+    tmp_path = out_path.with_suffix(".tmp")
+
     with requests.get(UNIPROT_STREAM_URL, params=params, stream=True, timeout=180) as r:
         r.raise_for_status()
-        with open(out_path, "wb") as f:
+        with open(tmp_path, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024 * 1024):
                 if chunk:
                     f.write(chunk)
 
+    tmp_path.rename(out_path)
+
 
 def main():
-    proteome_id = "UP000005640"
-    fasta_path = Path("output_files/proteome.fasta")
+    parser = argparse.ArgumentParser(description="Download UniProt proteome FASTA")
+    parser.add_argument("--proteome_id", required=True, help="UniProt proteome ID (e.g., UP000005640)")
+    parser.add_argument("--output", required=True, help="Output FASTA file path")
 
-    if fasta_path.exists():
+    args = parser.parse_args()
+
+    proteome_id = args.proteome_id
+    fasta_path = Path(args.output)
+
+    if fasta_path.exists() and fasta_path.stat().st_size > 0:
         print(f"Using cached {fasta_path.resolve()}")
         return
 

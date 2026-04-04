@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+
 NADH_SMILES = "NC(=O)C1=CN([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C@@H](n4cnc5c(N)ncnc54)[C@H](O)[C@@H]3O)[C@@H](O)[C@H]2O)C=CC1"
 NADPH_SMILES = "NC(=O)C1=CN(C=CC1)[C@@H]1O[C@H](COP(O)(=O)OP(O)(=O)OC[C@H]2O[C@H]([C@H](OP(O)(O)=O)[C@@H]2O)N2C=NC3=C2N=CN=C3N)[C@@H](O)[C@H]1O"
 
@@ -39,14 +40,17 @@ def read_ceramides(csv_path: Path):
     return ligands
 
 
-def make_yaml(protein_seq: str, msa_path: str, ligand: dict) -> str:
+def make_yaml(protein_seq: str, ligand: dict, msa_path: str | None = None) -> str:
     lines = []
     lines.append("version: 1")
     lines.append("sequences:")
     lines.append("  - protein:")
     lines.append("      id: A")
     lines.append(f"      sequence: {protein_seq}")
-    lines.append(f"      msa: {msa_path}")
+
+    if msa_path:
+        lines.append(f"      msa: {msa_path}")
+
     lines.append("  - ligand:")
     lines.append("      id: B")
 
@@ -55,10 +59,6 @@ def make_yaml(protein_seq: str, msa_path: str, ligand: dict) -> str:
     else:
         v = ligand["value"].replace("'", "''")
         lines.append(f"      smiles: '{v}'")
-
-    # lines.append("  - ligand:")
-    # lines.append("      id: C")
-    # lines.append(f"      smiles: '{NADPH_SMILES}'")
 
     lines.append("properties:")
     lines.append("  - affinity:")
@@ -75,20 +75,15 @@ def main():
     ap.add_argument("--random", action="store_true", help="randomly sample instead of first X/Y")
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument(
-        "--msa_base_dir",
-        type=Path,
-        required=True,
+        "--msa_base_dir", type=Path, required=True,
         help="Base dir containing per-protein MSA folders (each should contain msa.a3m).",
     )
     ap.add_argument(
-        "--out_base_dir",
-        type=Path,
-        default=Path("boltz_ready"),
+        "--out_base_dir", type=Path, default=Path("boltz_ready"),
         help="Where to write boltz_ready/<run_name> (default: ./boltz_ready)",
     )
     ap.add_argument(
-        "--require_msa",
-        action="store_true",
+        "--require_msa", action="store_true",
         help="If set, raise an error if a protein's msa.a3m file does not exist.",
     )
 
@@ -138,14 +133,17 @@ def main():
     for p in proteins:
         acc_safe = safe_name(p["accession"])
         msa_file = msa_base / acc_safe / "msa.a3m"
+        msa_exists = msa_file.exists()
 
-        if args.require_msa and not msa_file.exists():
+        if args.require_msa and not msa_exists:
             raise FileNotFoundError(f"Missing MSA for {p['accession']}: {msa_file}")
+
+        msa_path = str(msa_file.resolve()) if msa_exists else None
 
         for c in ceramides:
             fname = f"{safe_name(p['accession'])}{file_delim}{safe_name(c['ligand_id'])}.yaml"
             (out_dir / fname).write_text(
-                make_yaml(p["sequence"], str(msa_file.resolve()), c),
+                make_yaml(p["sequence"], c, msa_path),
                 encoding="utf-8",
             )
             n += 1

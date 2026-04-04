@@ -1,15 +1,4 @@
 #!/bin/bash
-#SBATCH --job-name=boltz_single
-#SBATCH --output=logs/boltz/boltz_run_%j.log
-#SBATCH --error=logs/boltz/boltz_run_%j.log
-#SBATCH --time=00:30:00
-#SBATCH --cluster=granite
-#SBATCH --partition=rai-gpu-grn
-#SBATCH --qos=rai-gpu-grn
-#SBATCH --account=rai
-#SBATCH --mem=16G
-#SBATCH --gres=gpu:h200:1
-
 set -euo pipefail
 
 module purge
