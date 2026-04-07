@@ -16,13 +16,26 @@ fi
 
 # FILL IN HERE: Choose which ligand CSV and protein CSV 
 # you want to generate combinations for
-PROTEIN_CSV=
-LIGAND_CSV=
+PROTEIN_CSV=""
+LIGAND_CSV=""
+USE_PROTEOME=0
 
 DRY_RUN=0
 
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --protein_csv)
+            PROTEIN_CSV="$2"
+            shift 2
+            ;;
+        --ligand_csv)
+            LIGAND_CSV="$2"
+            shift 2
+            ;;
+        --proteome)
+            USE_PROTEOME=1
+            shift
+            ;;
         --dry-run)
             DRY_RUN=1
             shift
@@ -34,44 +47,69 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Validate input arguments
+if [[ "$USE_PROTEOME" -eq 1 ]]; then
+    echo "Running in proteome mode (auto download + convert)."
+else
+    if [[ -z "$PROTEIN_CSV" || -z "$LIGAND_CSV" ]]; then
+        echo "ERROR: You must provide --protein_csv and --ligand_csv OR use --proteome"
+        exit 1
+    fi
+    echo "Running in manual CSV mode."
+fi
+
 # Ensure directories exist
-mkdir -p "$PROTEIN_DIR" "$LIGAND_DIR" "$YAML_DIR"
+mkdir -p "$YAML_DIR"
 
 # Step 0: Check ligand CSV
-echo "Checking ligand files..."
-if ! ls "$LIGAND_DIR"/*.csv >/dev/null 2>&1; then
-    echo "ERROR: No CSV file found in $LIGAND_DIR"
-    exit 1
+echo "Checking ligand CSV..."
+if [[ -n "$LIGAND_CSV" ]]; then
+    if [[ ! -f "$LIGAND_CSV" ]]; then
+        echo "ERROR: Ligand CSV not found at $LIGAND_CSV"
+        exit 1
+    fi
+    echo "Using ligand CSV: $LIGAND_CSV"
+else
+    if ! ls "$LIGAND_DIR"/*.csv >/dev/null 2>&1; then
+        echo "ERROR: No CSV file found in $LIGAND_DIR"
+        exit 1
+    fi
+    echo "Using ligand CSVs in directory: $LIGAND_DIR"
 fi
 echo "Ligand CSV found."
 
-# Step 1: Download proteome if missing
-echo "Checking protein files..."
-# Check if protein directory is empty
-if [ ! -f "$FASTA_FILE" ]; then
-    echo "Proteome FASTA missing. Downloading..."
-    python scripts/download_proteome.py \
-        --proteome_id UP000005640 \
-        --output "$FASTA_FILE"
-    echo "Proteome downloaded."
-else
-    echo "FASTA already exists. Skipping download."
-fi
-echo "Step 1 complete."
+if [[ "$USE_PROTEOME" -eq 1 ]]; then
+    echo "Checking protein files..."
 
-# Step 2: Convert FASTA to CSV
-echo "Running FASTA → CSV conversion..."
-if [ ! -f "$CSV_FILE" ]; then
-    python scripts/proteome_fasta_to_csv.py \
-        --input "$FASTA_FILE" \
-        --output "$CSV_FILE"
-    echo "CSV created at $CSV_FILE"
-else
-    echo "CSV already exists. Skipping conversion."
+    # Step 1: Download proteome
+    if [ ! -f "$FASTA_FILE" ]; then
+        echo "Proteome FASTA missing. Downloading..."
+        python scripts/download_proteome.py \
+            --proteome_id UP000005640 \
+            --output "$FASTA_FILE"
+        echo "Proteome downloaded."
+    else
+        echo "FASTA already exists. Skipping download."
+    fi
+    echo "Step 1 complete."
+
+    # Step 2: Convert FASTA to CSV
+    echo "Running FASTA → CSV conversion..."
+    if [ ! -f "$CSV_FILE" ]; then
+        python scripts/proteome_fasta_to_csv.py \
+            --input "$FASTA_FILE" \
+            --output "$CSV_FILE"
+        echo "CSV created at $CSV_FILE"
+    else
+        echo "CSV already exists. Skipping conversion."
+    fi
+    echo "Step 2 complete."
+
+    PROTEIN_CSV="$CSV_FILE"
 fi
-echo "Step 2 complete."
 
 # TO DO: Change generate_yaml.py to accept one ligand and one protein csv
+# These arguments are currently $LIGAND_CSV and $PROTEIN_CSV
 # TO DO: Add cofactor argument that can read a .txt file and add the SMILES to the .yaml
 # TO DO: Change output_yaml to output_dir and route to a directory of outputs
 
