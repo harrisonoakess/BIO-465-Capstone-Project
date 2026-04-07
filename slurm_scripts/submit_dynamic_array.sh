@@ -8,7 +8,7 @@ YAML_PER_JOB="${2:-1}"
 # Ensure environment variables are loaded
 # Modify the path below to target 
 # the environment file
-ENV_FILE="/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project/slurm_scripts/capstone_path_env.sh"
+ENV_FILE="/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Projectcapstone_path_env.sh"
 if [ -f "$ENV_FILE" ]; then
     . "$ENV_FILE"
 fi

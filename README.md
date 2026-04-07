@@ -1,69 +1,156 @@
-# Capstone Reproducibility Workflow
+# Reproducing the Data with the Pipeline Scripts
 
-This repository is organized to support a reproducible workflow for preparing protein and ligand inputs, generating MSAs, and creating YAML files for downstream modeling.
+This project can be reproduced using the provided shell pipelines.
 
-## Overview
+## What the pipelines do
 
-The current reproducibility pipeline follows this general process:
+The main pipeline handles:
 
-1. Download a proteome
-   - Upload FASTA
-   - Convert FASTA to CSV
+1. Preparing protein inputs
+2. Generating YAML files
+3. Submitting Boltz-2 jobs
 
-2. Convert the CSV into one FASTA file per protein in scratch storage
-
-3. Generate an MSA for each protein and store outputs in scratch
-
-4. Create one YAML file for each protein
-
-5. Add ceramide ligand inputs in a structured, reproducible format
+A second pipeline handles downstream analysis after Boltz outputs are available.
 
 ---
 
-## Workflow Steps
+## Before You Start
 
-### 1. Download proteome
+Set your local paths in:
 
-Start by obtaining the proteome FASTA file that will be used as the source input for the pipeline.
+    capstone_path_env.sh
 
-#### 1.01 Upload FASTA
-Place the proteome FASTA file into the appropriate input location.
+Make sure the paths used by the pipelines are correct for your system.
 
-#### 1.02 Convert FASTA to CSV
-Convert the FASTA file into a CSV format so that proteins can be processed more easily in downstream scripts.
+At minimum, check these variables:
 
----
-
-### 2. Convert CSV into one FASTA file per protein
-
-Take the protein CSV and generate one FASTA file for each protein sequence.
-
-These FASTA files should be stored in scratch space so they can be used for large-scale batch processing.
-
----
-
-### 2.1 Generate MSA for each protein
-
-For each protein FASTA file:
-
-- run MSA generation
-- save the resulting MSA outputs in scratch storage
-- keep naming conventions consistent so each MSA can be matched back to its protein
+- `PROJECT_ROOT`
+- `FASTA_FILE`
+- `CSV_FILE`
+- `LIGAND_DIR`
+- `YAML_DIR`
+- `MSA_BASE_DIR`
+- `PROCESSED_DIR`
+- `PLOT_DIR`
 
 ---
 
-### 3. Create one YAML file for each protein
+## Pipeline 1: Prepare Inputs, Generate YAMLs, and Submit Boltz Jobs
 
-After the protein FASTA files and MSAs are ready, generate one YAML file per protein.
+Run this pipeline to prepare the data and launch Boltz jobs.
 
-Each YAML file should point to the required inputs for downstream runs, including protein sequence information and ligand information where needed.
+### Manual protein CSV mode
+
+    bash run_pipeline.sh \
+      --protein_csv /path/to/proteins.csv \
+      --ligand_csv /path/to/ligands.csv
+
+### Proteome mode
+
+    bash run_pipeline.sh \
+      --proteome \
+      --ligand_csv /path/to/ligands.csv
+
+### With optional extra SMILES
+
+If you want to include an extra SMILES ligand from a TXT file, add `--smiles_txt`:
+
+    bash run_pipeline.sh \
+      --protein_csv /path/to/proteins.csv \
+      --ligand_csv /path/to/ligands.csv \
+      --smiles_txt /path/to/cofactor.txt
+
+### Dry run
+
+To test the pipeline without submitting Boltz jobs:
+
+    bash run_pipeline.sh \
+      --protein_csv /path/to/proteins.csv \
+      --ligand_csv /path/to/ligands.csv \
+      --dry-run
 
 ---
 
-### 4. Add ceramide ligand inputs
+## Required Input Files
 
-Ceramide inputs should be stored in a reproducible file format so they can be reused across runs.
+### Protein CSV
 
-A likely approach is to keep ligand information in a dedicated CSV file, then reference it when generating YAML files.
+The protein CSV should contain the proteins you want to run.
+
+### Ligand CSV
+
+The ligand CSV should contain the ligands you want to compare.
+
+### Optional SMILES TXT
+
+If used, the TXT file should contain one SMILES string.
+
+### MSA folders
+
+The pipeline expects MSA files under the base directory defined by `MSA_BASE_DIR`.
 
 ---
+
+## What Pipeline 1 Produces
+
+Running `run_pipeline.sh` will:
+
+- optionally download the proteome FASTA
+- optionally convert FASTA to protein CSV
+- generate Boltz-ready YAML files
+- submit Boltz jobs to the HPC cluster
+
+---
+
+## Pipeline 2: Process Outputs and Generate Analysis
+
+After Boltz jobs finish, run the analysis pipeline.
+
+    bash generate_graphs.sh
+
+This pipeline is used to:
+
+- parse raw Boltz outputs into processed CSV files
+- run enrichment analysis
+- generate downstream analysis outputs
+
+---
+
+## Full Reproduction Order
+
+Run the steps in this order:
+
+### 1. Configure paths
+
+Edit:
+
+    capstone_path_env.sh
+
+### 2. Run the main Boltz pipeline
+
+    bash run_pipeline.sh \
+      --protein_csv /path/to/proteins.csv \
+      --ligand_csv /path/to/ligands.csv
+
+or:
+
+    bash run_pipeline.sh \
+      --proteome \
+      --ligand_csv /path/to/ligands.csv
+
+### 3. Wait for Boltz jobs to finish
+
+Make sure all submitted jobs complete successfully before continuing.
+
+### 4. Run the analysis pipeline
+
+    bash run_analysis_pipeline.sh
+
+---
+
+## Notes
+
+- Use `--smiles_txt` only when you want to include the extra SMILES ligand.
+- If `--smiles_txt` is omitted, no extra SMILES is used.
+- If processed CSVs are already available, the analysis pipeline can be run after Boltz outputs are prepared.
+- The main pipeline and the analysis pipeline are intended to be run separately.
