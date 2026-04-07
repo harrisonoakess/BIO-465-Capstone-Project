@@ -33,6 +33,10 @@ At minimum, check these variables:
 - `PROCESSED_DIR`
 - `PLOT_DIR`
 
+The provided pipeline scripts should load these variables into your environment automatically. This can also be done manually by using the command:
+
+    source path/to/capstone_path_env.sh
+
 ---
 
 ## Pipeline 1: Prepare Inputs, Generate YAMLs, and Submit Boltz Jobs
@@ -150,7 +154,7 @@ Make sure all submitted jobs complete successfully before continuing.
 
 ## Notes
 
-- Use `--smiles_txt` only when you want to include the extra SMILES ligand.
+- Use `--smiles_txt` only when you want to include an additional SMILES cofactor.
 - If `--smiles_txt` is omitted, no extra SMILES is used.
 - If processed CSVs are already available, the analysis pipeline can be run after Boltz outputs are prepared.
 - The main pipeline and the analysis pipeline are intended to be run separately.

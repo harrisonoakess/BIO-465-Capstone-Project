@@ -17,6 +17,7 @@ export YAML_LIST_DIR="$PROJECT_ROOT/slurm_scripts/yaml_lists"
 export PROCESSED_DIR="$PROJECT_ROOT/processed_outputs"
 export SOURCE_DIR="$PROJECT_ROOT/prep_files/output_files"
 export PLOT_DIR="$PROJECT_ROOT/plots"
+export MSA_BASE_DIR="/scratch/rai/vast1/stewartp/msa_per_protein/proteome"
 
 # SCRATCH_ROOT is the location for outputs. If not
 # using the University of Utah HPC, this can be set

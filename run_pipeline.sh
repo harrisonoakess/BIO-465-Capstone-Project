@@ -128,7 +128,7 @@ echo "Generating YAML files..."
 GENERATE_ARGS=(
     --proteome_csv "$PROTEIN_CSV"
     --ceramide_csv "$LIGAND_CSV"
-    --msa_base_dir "$MSA_BASE_DIR" #define this in the env file
+    --msa_base_dir "$MSA_BASE_DIR"
     --out_base_dir "$YAML_DIR"
 )
 
