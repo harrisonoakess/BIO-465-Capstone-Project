@@ -3,7 +3,21 @@
 set -euo pipefail
 module load python
 
+# This script produces YAML files to be run by Boltz-2
+# and submits the jobs to the University of Utah HPC.
+
 echo "Starting pipeline..."
+
+# Load environment variables - MAKE SURE YOU CHANGED THEM TO YOUR LOCAL VARIABLES
+ENV_FILE="slurm_scripts/capstone_path_env.sh"
+if [ -f "$ENV_FILE" ]; then
+    . "$ENV_FILE"
+fi
+
+# FILL IN HERE: Choose which ligand CSV and protein CSV 
+# you want to generate combinations for
+PROTEIN_CSV=
+LIGAND_CSV=
 
 DRY_RUN=0
 
@@ -19,17 +33,6 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-
-# Put your ligands CSV file in inputs/ligands
-# Optionally place a custom proteins CSV file in inputs/proteins
-# Otherwise the proteome will be downloaded
-PROJECT_ROOT="."
-PROTEIN_DIR="inputs/proteins"
-LIGAND_DIR="inputs/ligands"
-YAML_DIR="/scratch/rai/vast1/stewartp/yaml"
-
-FASTA_FILE="$PROTEIN_DIR/proteome.fasta"
-CSV_FILE="$PROTEIN_DIR/proteome.csv"
 
 # Ensure directories exist
 mkdir -p "$PROTEIN_DIR" "$LIGAND_DIR" "$YAML_DIR"
@@ -67,6 +70,10 @@ else
     echo "CSV already exists. Skipping conversion."
 fi
 echo "Step 2 complete."
+
+# TO DO: Change generate_yaml.py to accept one ligand and one protein csv
+# TO DO: Add cofactor argument that can read a .txt file and add the SMILES to the .yaml
+# TO DO: Change output_yaml to output_dir and route to a directory of outputs
 
 # Step 3: Generate YAMLs for each ligand
 echo "Generating YAML files..."
@@ -112,35 +119,3 @@ else
     echo "Boltz jobs submitted for $JOB_NAME."
 fi
 echo "Step 4 complete. Boltz jobs submitted."
-    
-# Step 5: Convert Boltz outputs to CSV 
-# NOTE: PROCESSES ALL BOLTZ OUTPUTS BY DEFAULT
-echo "Processing Boltz outputs into CSV..."
-export OUTPUT_DIR="/scratch/rai/vast1/stewartp/boltz_results"
-export PROCESSED_DIR="$PROJECT_ROOT/processed_outputs"
-
-python scripts/output_parsing_to_csv.py --verbose
-echo "Step 5 complete: CSV files created."
-
-# Step 6: Running enrichment analysis
-echo "Running enrichment analysis..."
-
-ENRICH_SCRIPT="scripts/gseapy_ORA_analysis.py"
-PROCESSED_DIR="$PROCESSED_DIR"
-
-for csv_file in "$PROCESSED_DIR"/*.csv; do 
-    echo "Processing CSV: $csv_file"
-
-    if [ "$DRY_RUN" -eq 1 ]; then 
-        echo "[DRY RUN] Would run enrichment for $csv_file for all proteins"
-        echo "[DRY RUN] Would run enrichment for $csv_file split by ligand"
-    else 
-        echo "Running enrichment for all proteins..."
-        python "$ENRICH_SCRIPT" --csv "$csv_file" --by_ligand False
-
-        echo "Running enrichmeny by ligand..."
-        python "$ENRICH_SCRIPT" --csv "$csv_file" --by_ligand True
-    fi
-    echo "Finished processing $csv_file"
-done
-echo "Step 6 complete: Enrichment analysis done."

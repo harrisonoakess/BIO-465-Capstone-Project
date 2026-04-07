@@ -20,7 +20,7 @@ BATCH_SIZE=500
 SCRIPT="run_msa.sh"
 MAX_JOBS=1000
 
-OFFSET=0
+OFFSET=3000
 
 while [ "$OFFSET" -lt "$TOTAL_FILES" ]; do
     while true; do

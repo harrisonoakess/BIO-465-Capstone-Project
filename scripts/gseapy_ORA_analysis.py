@@ -153,6 +153,7 @@ def main():
     ])
     parser.add_argument("--by_ligand", action="store_true", help="Run enrichment separately for each ligand")
     parser.add_argument("--ligand_column", default="ligand", help="Column name for ligands if --by_ligand is used")
+    parser.add_argument("--outdir", type=Path, required=True, help="Output directory to place the enrichment analysis results")
     args = parser.parse_args()
 
     # Load data
@@ -167,7 +168,7 @@ def main():
     # Create main output folder
     csv_name = Path(args.csv).stem
     folder_name = csv_name.split("predictions_")[-1]
-    outdir = Path("../enrichment_analysis") / folder_name
+    outdir = args.outdir / folder_name
     outdir.mkdir(parents=True, exist_ok=True)
 
     if args.by_ligand:
