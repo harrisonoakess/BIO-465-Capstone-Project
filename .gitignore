@@ -14,3 +14,4 @@ scripts/.snakemake
 .venv/
 enrichment_analysis/
 processed_outputs
+Capstone_TA_Files

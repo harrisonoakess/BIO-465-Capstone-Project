@@ -4,7 +4,9 @@ This guide explains the main steps needed to run the project clearly and in orde
 
 ---
 
-## Step 1: Set up the Python environment and install `requirements.txt`
+## Step 1: Set up the Python environment, install `requirements.txt`, and add *Capstone_TA_Files* to your root directory
+
+Unzip the file we submitted in learning suite and copy it into the project root
 
 This project was tested using a Conda environment with Python 3.11.
 
