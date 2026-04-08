@@ -1,160 +1,153 @@
-# Reproducing the Data with the Pipeline Scripts
+# BIO-465 Capstone Project Steps
 
-This project can be reproduced using the provided shell pipelines.
-
-## What the pipelines do
-
-The main pipeline handles:
-
-1. Preparing protein inputs
-2. Generating YAML files
-3. Submitting Boltz-2 jobs
-
-A second pipeline handles downstream analysis after Boltz outputs are available.
+This guide explains the main steps needed to run the project clearly and in order.
 
 ---
 
-## Before You Start
+## Step 1: Set up the Python environment and install `requirements.txt`
 
-Set your local paths in:
+This project was tested using a Conda environment with Python 3.11.
 
-    capstone_path_env.sh
+Create the environment:
 
-Make sure the paths used by the pipelines are correct for your system.
+```bash
+conda create -n capstone311 python=3.11
+```
 
-At minimum, check these variables:
+Activate the environment:
 
-- `PROJECT_ROOT`
-- `FASTA_FILE`
-- `CSV_FILE`
-- `LIGAND_DIR`
-- `YAML_DIR`
-- `MSA_BASE_DIR`
-- `PROCESSED_DIR`
-- `PLOT_DIR`
+```bash
+conda activate capstone311
+```
 
-The provided pipeline scripts should load these variables into your environment automatically. This can also be done manually by using the command:
+Install the required packages:
 
-    source path/to/capstone_path_env.sh
+```bash
+pip install -r requirements.txt
+```
 
----
+Your `requirements.txt` should include the packages needed by the scripts, such as:
 
-## Pipeline 1: Prepare Inputs, Generate YAMLs, and Submit Boltz Jobs
-
-Run this pipeline to prepare the data and launch Boltz jobs.
-
-### Manual protein CSV mode
-
-    bash run_pipeline.sh \
-      --protein_csv /path/to/proteins.csv \
-      --ligand_csv /path/to/ligands.csv
-
-### Proteome mode
-
-    bash run_pipeline.sh \
-      --proteome \
-      --ligand_csv /path/to/ligands.csv
-
-### With optional extra SMILES
-
-If you want to include an extra SMILES ligand from a TXT file, add `--smiles_txt`:
-
-    bash run_pipeline.sh \
-      --protein_csv /path/to/proteins.csv \
-      --ligand_csv /path/to/ligands.csv \
-      --smiles_txt /path/to/cofactor.txt
-
-### Dry run
-
-To test the pipeline without submitting Boltz jobs:
-
-    bash run_pipeline.sh \
-      --protein_csv /path/to/proteins.csv \
-      --ligand_csv /path/to/ligands.csv \
-      --dry-run
+```txt
+pandas
+numpy
+matplotlib
+seaborn
+scipy
+gseapy
+mygene
+pyrolite
+```
 
 ---
 
-## Required Input Files
+## Step 2: Set up the path variables in `capstone_path_env.sh`
 
-### Protein CSV
+Before running the scripts, update the environment file so the paths match your machine.
 
-The protein CSV should contain the proteins you want to run.
+Open:
 
-### Ligand CSV
+```bash
+capstone_path_env.sh
+```
 
-The ligand CSV should contain the ligands you want to compare.
+Make sure the variables point to the correct folders.
 
-### Optional SMILES TXT
+Example local setup:
 
-If used, the TXT file should contain one SMILES string.
+```bash
+export PROJECT_ROOT="/absolute/path/to/BIO-465-Capstone-Project"
 
-### MSA folders
+export SLURM_SCRIPT_DIR="$PROJECT_ROOT/slurm_scripts"
+export SCRIPT_DIR="$PROJECT_ROOT/scripts"
+export YAML_DIR="$PROJECT_ROOT/yaml_files"
+export LOG_DIR="$PROJECT_ROOT/logs"
+export YAML_LIST_DIR="$PROJECT_ROOT/yaml_lists"
+export PROCESSED_DIR="$PROJECT_ROOT/processed_outputs"
+export SOURCE_DIR="$PROJECT_ROOT/Capstone_TA_Files"
+export PLOT_DIR="$PROJECT_ROOT/plots"
 
-The pipeline expects MSA files under the base directory defined by `MSA_BASE_DIR`.
+export MSA_BASE_DIR="$PROJECT_ROOT/msa_per_protein"
+export SCRATCH_ROOT="$PROJECT_ROOT/scratch"
+export OUTPUT_DIR="$SCRATCH_ROOT/boltz_results"
+```
 
----
+### Important variables
 
-## What Pipeline 1 Produces
-
-Running `run_pipeline.sh` will:
-
-- optionally download the proteome FASTA
-- optionally convert FASTA to protein CSV
-- generate Boltz-ready YAML files
-- submit Boltz jobs to the HPC cluster
-
----
-
-## Pipeline 2: Process Outputs and Generate Analysis
-
-After Boltz jobs finish, run the analysis pipeline.
-
-    bash generate_graphs.sh
-
-This pipeline is used to:
-
-- parse raw Boltz outputs into processed CSV files
-- run enrichment analysis
-- generate downstream analysis outputs
+- `PROJECT_ROOT` = root of the repository
+- `SOURCE_DIR` = folder containing input CSV files
+- `YAML_DIR` = where generated YAML files will be written
+- `PROCESSED_DIR` = where processed Boltz output CSV files are stored
+- `PLOT_DIR` = where figures will be saved
 
 ---
 
-## Full Reproduction Order
+## Step 3: Run `generate_TA_data.sh`
 
-Run the steps in this order:
+This script generates the Boltz YAML input files for the experiment groups.
 
-### 1. Configure paths
+Run:
 
-Edit:
+```bash
+bash generate_TA_data.sh
+```
 
-    capstone_path_env.sh
+This step should:
 
-### 2. Run the main Boltz pipeline
+- load the source protein and ligand CSV files
+- generate YAML files for each protein-ligand combination
+- write them into subfolders inside `YAML_DIR`
 
-    bash run_pipeline.sh \
-      --protein_csv /path/to/proteins.csv \
-      --ligand_csv /path/to/ligands.csv
+### Example output folders
 
-or:
+- `random_plus_paul_metabolites`
+- `random_plus_paul_c16dihydro`
+- `pisa_c16dihydro`
+- `random_plus_pauls_c16`
+- `pisa_c16_human`
 
-    bash run_pipeline.sh \
-      --proteome \
-      --ligand_csv /path/to/ligands.csv
+After running, you can check the YAML folders with:
 
-### 3. Wait for Boltz jobs to finish
+```bash
+ls zz_yaml_files
+```
 
-Make sure all submitted jobs complete successfully before continuing.
+---
 
-### 4. Run the analysis pipeline
+## Step 4: Run `generate_graphs.sh`
 
-    bash run_analysis_pipeline.sh
+This script generates figures from processed prediction CSV files.
+
+Run:
+
+```bash
+bash generate_graphs.sh
+```
+
+This step creates plots such as:
+
+- C16 boxplot
+- C16 dihydro boxplot
+- ceramide heat scatter plots
+- enrichment analysis outputs
+
+Plots are written to:
+
+```bash
+plots/
+```
+
+Enrichment outputs are written under:
+
+```bash
+plots/enrichment_analysis/
+```
 
 ---
 
 ## Notes
 
-- Use `--smiles_txt` only when you want to include an additional SMILES cofactor.
-- If `--smiles_txt` is omitted, no extra SMILES is used.
-- If processed CSVs are already available, the analysis pipeline can be run after Boltz outputs are prepared.
-- The main pipeline and the analysis pipeline are intended to be run separately.
+- `generate_TA_data.sh` is for generating Boltz input YAML files.
+- `generate_graphs.sh` is for generating figures from processed CSV outputs.
+- Full Boltz job submission requires the HPC/Slurm environment.
+- Local testing is mainly for validating paths, generating YAMLs, and creating figures.

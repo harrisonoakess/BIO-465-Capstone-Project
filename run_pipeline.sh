@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
-module load python
+if command -v module >/dev/null 2>&1; then
+    module load python
+fi
 
 # This script produces YAML files to be run by Boltz-2
 # and submits the jobs to the University of Utah HPC.
@@ -132,6 +134,10 @@ GENERATE_ARGS=(
     --out_base_dir "$YAML_DIR"
 )
 
+if [[ -n "$JOB_NAME" ]]; then
+    GENERATE_ARGS+=(--output_dir_name "$JOB_NAME")
+fi
+
 if [[ -n "${SMILES_TXT:-}" ]]; then
     GENERATE_ARGS+=(--smiles_txt "$SMILES_TXT")
 fi
@@ -144,9 +150,10 @@ echo "Step 3 complete. All YAMLs generated."
 if [ "$DRY_RUN" -eq 1 ]; then
     echo "[DRY RUN] Skipping Boltz job submission."
     echo "[DRY RUN] Would have submitted jobs using submit_dynamic_array.sh for $JOB_NAME"
+    echo "Step 4 complete. No Boltz jobs were submitted."
 else
     echo "Submitting Boltz jobs..."
     bash "$PROJECT_ROOT/slurm_scripts/submit_dynamic_array.sh" "$JOB_NAME"
     echo "Boltz jobs submitted for $JOB_NAME."
+    echo "Step 4 complete."
 fi
-echo "Step 4 complete. Boltz jobs submitted."

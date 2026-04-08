@@ -9,6 +9,7 @@ if [ -f "$ENV_FILE" ]; then
     . "$ENV_FILE"
 fi
 
+mkdir -p "$PLOT_DIR"
 echo "Project root is: $PROJECT_ROOT"
 echo "Plots will be saved to: $PLOT_DIR"
 
@@ -27,7 +28,7 @@ echo "Step 5 complete: CSV files created."
 C16_proteins_of_interest="$SOURCE_DIR/human_pisa_proteins.csv"
 C16_all_proteins="$SOURCE_DIR/2000_random_proteins.csv"
 C16_processed_data_1="$PROCESSED_DIR/confidence_predictions_pisa_c16_human.csv"
-C16_processed_data_2="$PROCESSED_DIR/confidence_predictions_random_plus_pauls_c16.csv"
+C16_processed_data_2="$PROCESSED_DIR/confidence_predictions_random_plus_paul_c16.csv"
 C16_boxplot_script="$SCRIPT_DIR/create_figs/c16_boxplot.py"
 
 echo "Creating C16 boxplot..."
@@ -41,7 +42,7 @@ python "$C16_boxplot_script" --proteins_of_interest_csv "$C16_proteins_of_intere
 C16_dihydro_proteins_of_interest="$SOURCE_DIR/human_pisa_proteins.csv"
 C16_dihydro_all_proteins="$SOURCE_DIR/2000_random_proteins.csv"
 C16_dihydro_processed_data_1="$PROCESSED_DIR/confidence_predictions_pisa_c16dihydro.csv"
-C16_dihydro_processed_data_2="$PROCESSED_DIR/confidence_predictions_random_plus_pauls_c16dihydro.csv"
+C16_dihydro_processed_data_2="$PROCESSED_DIR/confidence_predictions_random_plus_paul_c16dihydro.csv"
 C16_dihydro_boxplot_script="$SCRIPT_DIR/create_figs/c16_dihydro_boxplot.py"
 
 echo "Creating C16 dihydro boxplot..."
@@ -77,7 +78,7 @@ python "$control_analysis_script" --output_folder "$control_analysis_output_fold
 
 ### Heat scatterplot of ceramides
 
-ceramide_analysis_csv_1="confidence_predictions_random_plus_pauls_c16.csv"
+ceramide_analysis_csv_1="confidence_predictions_random_plus_paul_c16.csv"
 ceramide_analysis_csv_2="confidence_predictions_random_plus_paul_c16dihydro.csv"
 ligand_name_1="c16"
 ligand_name_2="c16_dihydro"
@@ -93,14 +94,18 @@ python "$ceramide_analysis_script" \
 echo "Running enrichment analysis on $ENRICH_CSV..."
 
 ENRICH_CSV="$PROCESSED_DIR/confidence_predictions_random_plus_paul_metabolites.csv"
-ENRICH_SCRIPT="$PROJECT_ROOT/gseapy_ORA_analysis.py"
+ENRICH_SCRIPT="$SCRIPT_DIR/gseapy_ORA_analysis.py"
 ENRICH_OUTDIR="$PLOT_DIR/enrichment_analysis"
+
+echo "Running enrichment analysis on $ENRICH_CSV..."
 echo "Processing CSV: $ENRICH_CSV"
+
 echo "Running enrichment for all proteins..."
-python "$ENRICH_SCRIPT" --csv "$ENRICH_CSV" --by_ligand False --outdir "$ENRICH_OUTDIR"
+python "$ENRICH_SCRIPT" --csv "$ENRICH_CSV" --outdir "$ENRICH_OUTDIR"
 
 echo "Running enrichment by ligand..."
-python "$ENRICH_SCRIPT" --csv "$ENRICH_CSV" --by_ligand True --outdir "$ENRICH_OUTDIR"
+python "$ENRICH_SCRIPT" --csv "$ENRICH_CSV" --by_ligand --outdir "$ENRICH_OUTDIR"
+
 echo "Finished processing $ENRICH_CSV"
 
 echo "Step 6 complete: Analysis and figure generation done."

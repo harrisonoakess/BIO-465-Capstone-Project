@@ -69,7 +69,7 @@ def main():
     ap.add_argument("--proteins_of_interest_csv", type=str, nargs='+', default=["human_pisa_proteins.csv"])
     ap.add_argument("--all_proteins_csv", type=str, nargs='+', default=["2000_random_proteins.csv"])
     ap.add_argument("--processed_csv", type=str, nargs='+', default=["confidence_predictions_pisa_c16_human.csv",
-                                                                     "confidence_predictions_random_plus_pauls_c16.csv"])
+                                                                     "confidence_predictions_random_plus_paul_c16.csv"])
     args = ap.parse_args()
 
     proteins_of_interest_list = args.proteins_of_interest_csv

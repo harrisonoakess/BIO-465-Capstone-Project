@@ -120,7 +120,7 @@ def main():
     
     ap = argparse.ArgumentParser()
     ap.add_argument("--csvs", type=str, nargs=2, 
-                    default=["confidence_predictions_random_plus_pauls_c16.csv", "confidence_predictions_random_plus_paul_c16dihydro.csv"])
+                    default=["confidence_predictions_random_plus_paul_c16.csv", "confidence_predictions_random_plus_paul_c16dihydro.csv"])
     ap.add_argument("--ligand_names", type=str, nargs=2, 
                     default=["c16", "c16_dihydro"])
     args = ap.parse_args()

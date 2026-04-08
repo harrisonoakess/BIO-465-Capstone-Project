@@ -5,7 +5,7 @@ from pathlib import Path
 # Paths
 pauls_path = Path("output_files/paul_proteins_2.csv")
 proteome_path = Path("output_files/proteome.csv")
-output_path = Path("output_files/random_plus_pauls.csv")
+output_path = Path("output_files/random_plus_paul.csv")
 
 # How many random proteome rows to add
 N_RANDOM = 2000
