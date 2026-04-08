@@ -15,3 +15,5 @@ scripts/.snakemake
 enrichment_analysis/
 processed_outputs
 Capstone_TA_Files
+yaml_files
+*.yaml

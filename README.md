@@ -6,7 +6,7 @@ This guide explains the main steps needed to run the project clearly and in orde
 
 ## Step 1: Set up the Python environment, install `requirements.txt`, and add *Capstone_TA_Files* to your root directory
 
-Unzip the file we submitted in learning suite and copy it into the project root
+Unzip the file we submitted in Learning Suite. Paste the entire folder into the BIO-465-Capstone-Project folder.
 
 This project was tested using a Conda environment with Python 3.11.
 
@@ -111,7 +111,7 @@ This step should:
 After running, you can check the YAML folders with:
 
 ```bash
-ls zz_yaml_files
+ls yaml_files
 ```
 
 ---

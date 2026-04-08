@@ -10,6 +10,12 @@ fi
 
 echo "SOURCE_DIR=$SOURCE_DIR"
 
+### TA note:
+# This script would ordinarily process job submissions to
+# the HPC to generate predictions. In this case, a dry run
+# is performed to illustrate the process. The requisite data
+# is included in the submitted folder on Learning Suite.
+
 bash run_pipeline.sh \
     --protein_csv "$SOURCE_DIR/random_plus_paul.csv" \
     --ligand_csv "$SOURCE_DIR/paul_metabolites.csv" \

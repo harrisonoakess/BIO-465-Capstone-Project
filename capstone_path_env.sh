@@ -7,7 +7,7 @@
 
 ### PATHS
 # Modify this to point to the local project directory
-export PROJECT_ROOT="/Users/harrisonoakes/Desktop/cap_test/BIO-465-Capstone-Project"
+export PROJECT_ROOT="/Users/matthewanderson/Documents/School/Winter 2026/BIO 465/Test_Env/BIO-465-Capstone-Project"
 
 export SLURM_SCRIPT_DIR="$PROJECT_ROOT/slurm_scripts"
 export SCRIPT_DIR="$PROJECT_ROOT/scripts"
