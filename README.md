@@ -122,6 +122,8 @@ This script generates figures from processed prediction CSV files.
 
 **You must exit out of the graph for it to continue to the next because we are using show()**
 
+**Enrichr has a chance of getting Error 429: Too many requests. If this happens, wait a few minutes and try step 4 again. This is not something we can control**
+
 Run:
 
 ```bash
