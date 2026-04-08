@@ -56,14 +56,14 @@ Make sure the variables point to the correct folders.
 Example local setup:
 
 ```bash
-export PROJECT_ROOT="/absolute/path/to/BIO-465-Capstone-Project"
+export PROJECT_ROOT="/absolute/path/to/BIO-465-Capstone-Project" # ------MUST CHANGE-------
 
 export SLURM_SCRIPT_DIR="$PROJECT_ROOT/slurm_scripts"
 export SCRIPT_DIR="$PROJECT_ROOT/scripts"
 export YAML_DIR="$PROJECT_ROOT/yaml_files"
 export LOG_DIR="$PROJECT_ROOT/logs"
 export YAML_LIST_DIR="$PROJECT_ROOT/yaml_lists"
-export PROCESSED_DIR="$PROJECT_ROOT/processed_outputs"
+export PROCESSED_DIR="$PROJECT_ROOT/Capstone_TA_Files/processed_outputs"
 export SOURCE_DIR="$PROJECT_ROOT/Capstone_TA_Files"
 export PLOT_DIR="$PROJECT_ROOT/plots"
 
@@ -117,6 +117,8 @@ ls zz_yaml_files
 ## Step 4: Run `generate_graphs.sh`
 
 This script generates figures from processed prediction CSV files.
+
+**You must exit out of the graph for it to continue to the next because we are using show()**
 
 Run:
 
