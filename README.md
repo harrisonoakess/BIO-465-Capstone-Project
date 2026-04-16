@@ -1,4 +1,4 @@
-# BIO-465 Capstone Project Steps
+# How to do Large-Scale Predictions of Protein-Metabolite Relationships Using our Boltz-2 Pipeline
 
 This guide explains the main steps needed to run the project clearly and in order.
 

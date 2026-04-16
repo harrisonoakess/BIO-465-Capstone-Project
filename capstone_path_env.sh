@@ -7,17 +7,16 @@
 
 ### PATHS
 # Modify this to point to the local project directory
-export PROJECT_ROOT="/Users/harrisonoakes/Desktop/cap_test/BIO-465-Capstone-Project"
+export PROJECT_ROOT="/uufs/chpc.utah.edu/common/home/u6073680/Capstone/BIO-465-Capstone-Project"
 
 export SLURM_SCRIPT_DIR="$PROJECT_ROOT/slurm_scripts"
 export SCRIPT_DIR="$PROJECT_ROOT/scripts"
-export YAML_DIR="$PROJECT_ROOT/yaml_files"
+export YAML_DIR="$PROJECT_ROOT/prep_files/boltz_ready"
 export LOG_DIR="$PROJECT_ROOT/logs"
-export YAML_LIST_DIR="$PROJECT_ROOT/yaml_lists"
-export PROCESSED_DIR="$PROJECT_ROOT/Capstone_TA_Files/processed_outputs"
-export SOURCE_DIR="$PROJECT_ROOT/Capstone_TA_Files"
+export YAML_LIST_DIR="$PROJECT_ROOT/slurm_scripts/yaml_lists"
+export PROCESSED_DIR="$PROJECT_ROOT/processed_outputs"
+export SOURCE_DIR="$PROJECT_ROOT/prep_files/output_files"
 export PLOT_DIR="$PROJECT_ROOT/plots"
-export MSA_BASE_DIR="/scratch/rai/vast1/stewartp/msa_per_protein/proteome"
 
 # SCRATCH_ROOT is the location for outputs. If not
 # using the University of Utah HPC, this can be set
@@ -25,3 +24,4 @@ export MSA_BASE_DIR="/scratch/rai/vast1/stewartp/msa_per_protein/proteome"
 export SCRATCH_ROOT="/scratch/rai/vast1/stewartp"
 
 export OUTPUT_DIR="$SCRATCH_ROOT/boltz_results"
+export MSA_BASE_DIR="$SCRATCH_ROOT/msa_per_protein/proteome"

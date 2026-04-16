@@ -7,6 +7,7 @@ import seaborn as sns
 from scipy import stats
 from pathlib import Path
 from pyrolite.plot import pyroplot
+from matplotlib.lines import Line2D
 
 # PROJECT_ROOT = Path(os.environ["PROJECT_ROOT"])
 # SCRIPT_DIR = Path(os.environ["SCRIPT_DIR"])
@@ -24,54 +25,45 @@ def load_csv_data(csv_file: str):
     data = pd.read_csv(csv_file_path)
     return data
 
-def create_heat_scatter_plot(data: pd.DataFrame, ligand_name_1: str, ligand_name_2: str, log_scale: bool = False):
-    x_col = f"{ligand_name_1}_micromolar_affinity_pred_value"
-    y_col = f"{ligand_name_2}_micromolar_affinity_pred_value"
+def create_heat_scatter_plot(data: pd.DataFrame, ligand_name_1: str, ligand_name_2: str, affinity_col: str, regression_line=False, xy_line=False):
+    
+    if regression_line and xy_line:
+        raise ValueError("Cannot have both regression_line and xy_line set to True. Please choose one.")
+       
+    x_col = f"{ligand_name_1}_{affinity_col}"
+    y_col = f"{ligand_name_2}_{affinity_col}"
 
     x = data[x_col]
     y = data[y_col]
 
-    fig, ax = plt.subplots(figsize=(12, 8))
+    data = data[[x_col, y_col]]
 
-    data.pyroplot.heatscatter(s=5, ax=ax)
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    data.pyroplot.heatscatter(s=10, ax=ax)
 
     # sns.scatterplot(x=x, y=y, alpha=0.6, c=density)
     # sns.jointplot(x=x, y=y, kind="hex", cmap='viridis')
     # ax.set_xlabel(f"{ligand_name_1} Predicted Affinity (µM)")
     # ax.set_ylabel(f"{ligand_name_2} Predicted Affinity (µM)")
     
-    ax.set_xlabel(f"C16 Predicted Affinity (µM)")
-    ax.set_ylabel(f"C16 Dihydro Predicted Affinity (µM)")
+    ax.set_xlabel(f"C16 Predicted Affinity (-log10(M))")
+    ax.set_ylabel(f"C16 Dihydro Predicted Affinity (-log10(M))")
     ax.grid(True)
     # ax.tight_layout()
 
-    # # Add X = Y line for reference
-    # max_val = max(x.max(), y.max())
-    # ax.plot([0, max_val], [0, max_val], color='red',
-    #             linestyle='solid', label='X = Y')
-    
-    if log_scale:
-        slope, intercept, r_value, p_value, std_err = linear_regression(np.log10(x), np.log10(y))
-        m = slope
-        b = intercept
-        r2 = r_value ** 2
+    ax.set_title("Heat Scatter Plot of Predicted Affinities")
+
+    if xy_line:
+        # Add X = Y line for reference
+        min_val = min(x.min(), y.min())
+        max_val = max(x.max(), y.max())
+        ax.plot([min_val, max_val], [min_val, max_val], color='blue',
+                    linestyle='solid', label='X = Y')
+
+        plot_title = f"xy_line_heat_scatter_{ligand_name_1}_vs_{ligand_name_2}.png"
         
-        ax.set_xscale('log')
-        ax.set_yscale('log')
-
-        x_line = np.geomspace(x.min(), x.max(), 300)
-        y_line = (10 ** b) * (x_line ** m)
-
-        ax.plot(x_line, y_line, color='blue', 
-                 linestyle='dashed', linewidth=2, 
-                 label=f"Fit: y={10**b:.2f}x^{m:.2f}, R^2={r2:.3f}")
-
-        # ax.title("Experimental vs Predicted Affinity (uM, log-log scale)")
-        ax.set_title("Heat Scatter Plot of Predicted Affinities (log-log scale)")
-        plot_title = f"heat_scatter_{ligand_name_1}_vs_{ligand_name_2}_log.png"
-
-
-    else:
+    if regression_line:
         slope, intercept, r_value, p_value, std_err = linear_regression(x, y)
         m = slope
         b = intercept
@@ -80,28 +72,20 @@ def create_heat_scatter_plot(data: pd.DataFrame, ligand_name_1: str, ligand_name
         x_line = np.linspace(x.min(), x.max(), 300)
         y_line = m * x_line + b
 
-        ax.plot(x_line, y_line, color='blue', 
-                 linestyle='dashed', linewidth=2, 
-                 label=f"Fit: y={m:.2f}x+{b:.2f}, R^2={r2:.3f}")
+        fit_line, = ax.plot(x_line, y_line, color='red', 
+                 linestyle='solid', linewidth=2, 
+                 label=f"Linear regression")
         
-        # ax.title("Experimental vs Predicted Affinity (uM)")
-        ax.set_title("Heat Scatter Plot of Predicted Affinities")
-        plot_title = f"heat_scatter_{ligand_name_1}_vs_{ligand_name_2}.png"
+        plot_title = f"regress_heat_scatter_{ligand_name_1}_vs_{ligand_name_2}.png"
 
-    ax.text(
-        0.05, 0.95,
-        f"$R^2$ = {r2:.3f}",
-        transform=ax.transAxes,
-        va="top",
-        ha="left",
-        fontsize=14,
-        bbox=dict(boxstyle="round", facecolor="white", alpha=0.8, edgecolor="none")
-    )
+    r2_text = f"$R^2$ = {r2:.3f}"
+    r2_label = Line2D([], [], color='none', label=r2_text)
 
-    # ax.legend(loc="best")
+    ax.legend(handles=[fit_line, r2_label], loc="upper left", frameon=True, bbox_to_anchor=(0.02, 0.98))
+    fig.tight_layout()
     plot_file_path = PLOT_DIR / plot_title
-    plt.savefig(plot_file_path, bbox_inches='tight', dpi=300)
-    print(f"Heat scatter plot saved to: {plot_file_path}")
+    plt.savefig(plot_file_path, bbox_inches='tight', dpi=600)
+    print(f"Heat scatter plot saved to: {plot_title}")
     plt.show()
 
 def linear_regression(x, y):
@@ -131,7 +115,7 @@ def main():
     data_1 = load_csv_data(file_name_1)
     data_2 = load_csv_data(file_name_2)
 
-    affinity_col = "micromolar_affinity_pred_value"
+    affinity_col = "neg_log_molar_affinity_pred_value"
     target_cols = ["protein", affinity_col]
 
     data_1 = data_1[target_cols]
@@ -143,8 +127,8 @@ def main():
     merged_data = pd.merge(data_1, data_2, on="protein")
     merged_data = merged_data.drop("protein", axis=1)
 
-    create_heat_scatter_plot(merged_data, ligand_name_1, ligand_name_2)
-    create_heat_scatter_plot(merged_data, ligand_name_1, ligand_name_2, log_scale=True)
+    create_heat_scatter_plot(merged_data, ligand_name_1, ligand_name_2, affinity_col, regression_line=True)
+    create_heat_scatter_plot(merged_data, ligand_name_1, ligand_name_2, affinity_col, xy_line=True)
 
 
 if __name__ == "__main__":

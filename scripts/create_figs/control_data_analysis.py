@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import linregress
 from pyrolite.plot import pyroplot
+from matplotlib.lines import Line2D
 
 from generate_plots import make_plot_folder
 
@@ -79,11 +80,11 @@ def heat_scatter_plot_experimental_vs_predicted(data, output_file):
     predicted_affinity_field = 'neg_log_molar_affinity_pred_value'
     experimental_affinity_field = 'neg_log_experimental_affinity' 
     
-    plot_data = data[[predicted_affinity_field, experimental_affinity_field]]
+    plot_data = data[[experimental_affinity_field, predicted_affinity_field]]
 
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(8, 6))
 
-    plot_data.pyroplot.heatscatter(s=5, ax=ax)
+    plot_data.pyroplot.heatscatter(s=10, ax=ax)
 
     x = plot_data[experimental_affinity_field]
     y = plot_data[predicted_affinity_field]
@@ -91,10 +92,8 @@ def heat_scatter_plot_experimental_vs_predicted(data, output_file):
     ax.set_xlabel("Experimental Affinity (-log10(M))")
     ax.set_ylabel("Predicted Affinity (-log10(M))")
 
-    result = linregress(x, y)
-    m = result.slope
-    b = result.intercept
-    r2 = result.rvalue ** 2
+    m, b, r_value, _, _ = linregress(x, y)
+    r2 = r_value ** 2
 
     min_val = min(x.min(), y.min())
     max_val = max(x.max(), y.max())
@@ -102,25 +101,29 @@ def heat_scatter_plot_experimental_vs_predicted(data, output_file):
     x_line = np.linspace(min_val, max_val, 300)
     y_line = m * x_line + b
 
-    ax.plot(x_line, y_line, color='red', 
+    fit_line, = ax.plot(x_line, y_line, color='red', 
             linewidth=2, 
-            # label=f"Fit: y={m:.2f}x+{b:.2f}, R^2={r2:.3f}"
+            label=f"Linear regression"
             )
 
-    ax.text(
-        0.05, 0.95,
-        f"$R^2$ = {r2:.3f}",
-        transform=ax.transAxes,
-        va="top",
-        ha="left",
-        fontsize=14,
-        bbox=dict(boxstyle="round", facecolor="white", alpha=0.8, edgecolor="none")
-    )
+    r2_text = f"$R^2$ = {r2:.3f}"
+    r2_label = Line2D([], [], color='none', label=r2_text)
+
+    # ax.text(
+    #     0.05, 0.95,
+    #     f"$R^2$ = {r2:.3f}",
+    #     transform=ax.transAxes,
+    #     va="top",
+    #     ha="left",
+    #     fontsize=14,
+    #     bbox=dict(boxstyle="round", facecolor="white", alpha=0.8, edgecolor="none")
+    # )
 
     plt.title("Heat Scatter Plot of Predicted vs Experimental Affinities")
-    # plt.legend()
+    ax.legend(handles=[fit_line, r2_label], loc="upper left", frameon=True, bbox_to_anchor=(0.02, 0.98))
+    fig.tight_layout()
     plt.grid(True)
-    plt.savefig(output_file, dpi=300)
+    plt.savefig(output_file, dpi=600)
     plt.close()
 
 

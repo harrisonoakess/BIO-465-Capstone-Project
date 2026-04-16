@@ -54,7 +54,7 @@ def run_enrichment(protein_list, gene_sets, outdir):
     return enr
 
 
-def plot_top_enrichment(results, outdir, p, ligand=None, top_n=15, x_col="Combined Score"):
+def plot_top_enrichment(results, outdir, p, title, ligand=None, top_n=15, x_col="Combined Score"):
     """
     Plot top enriched pathways.
     """
@@ -71,17 +71,17 @@ def plot_top_enrichment(results, outdir, p, ligand=None, top_n=15, x_col="Combin
 
     results_sorted = results_sorted.sort_values(x_col, ascending=False).head(top_n)
 
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(14, 6))
     sns.barplot(
         data=results_sorted,
         y="Term",
         x=x_col,
-        palette="viridis"
+        color="skyblue"
     )
 
     if x_col == "neg_log10_fdr":
         plt.axvline(x=1.3, color='red', linestyle='--', linewidth=1)
-        plt.text(1.32, plt.ylim()[1]*0.95, "FDR = 0.05", color='red', fontsize=10)
+        plt.text(1.32, 18, "FDR = 0.05", color='red', fontsize=10)
 
     xlabel_map = {
         "Combined Score": "Combined Score",
@@ -93,7 +93,7 @@ def plot_top_enrichment(results, outdir, p, ligand=None, top_n=15, x_col="Combin
     plt.xlabel(xlabel_map.get(x_col, x_col))
     plt.ylabel("")
     title_prefix = f"{ligand} - " if ligand else ""
-    plt.title(f"{title_prefix}Top {int(p*100)}% Predicted Binders")
+    plt.title(f"{title} - {title_prefix}Top {int(p*100)}% Predicted Binders")
     plt.tight_layout()
     filename = f"top_enrichment_barplot_{x_col.replace(' ', '_')}.png"
     plt.savefig(outdir / filename)
@@ -134,7 +134,7 @@ def run_enrichment_for_dataframe(df_subset, outdir, args, ligand=None):
             results_sorted = results.sort_values("Adjusted P-value")
             results_sorted.to_csv(percentile_outdir / f"enrichment_top_{int(p*100)}pct.csv", index=False)
             print(f"Saved results to {percentile_outdir / f'enrichment_top_{int(p*100)}pct.csv'}")
-            plot_top_enrichment(results_sorted, percentile_outdir, p, ligand=ligand, top_n=20, x_col=args.x_col)
+            plot_top_enrichment(results_sorted, percentile_outdir, p, title=args.title, ligand=ligand, top_n=20, x_col=args.x_col)
 
 
 # -------------------- Main -------------------- #
@@ -154,6 +154,7 @@ def main():
     parser.add_argument("--by_ligand", action="store_true", help="Run enrichment separately for each ligand")
     parser.add_argument("--ligand_column", default="ligand", help="Column name for ligands if --by_ligand is used")
     parser.add_argument("--outdir", type=Path, required=True, help="Output directory to place the enrichment analysis results")
+    parser.add_argument("--title", default="Enrichment", help="Title text before the top %.")
     args = parser.parse_args()
 
     # Load data
