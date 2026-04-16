@@ -52,15 +52,15 @@ def create_heat_scatter_plot(data: pd.DataFrame, ligand_name_1: str, ligand_name
     ax.grid(True)
     # ax.tight_layout()
 
-    ax.set_title("Heat Scatter Plot of Predicted Affinities")
-
     if xy_line:
         # Add X = Y line for reference
         min_val = min(x.min(), y.min())
         max_val = max(x.max(), y.max())
         ax.plot([min_val, max_val], [min_val, max_val], color='blue',
                     linestyle='solid', label='X = Y')
-
+        
+        ax.legend(loc="upper left", frameon=True, bbox_to_anchor=(0.02, 0.98))
+        ax.set_title("Heat Scatter Plot of Predicted Affinities")
         plot_title = f"xy_line_heat_scatter_{ligand_name_1}_vs_{ligand_name_2}.png"
         
     if regression_line:
@@ -76,12 +76,13 @@ def create_heat_scatter_plot(data: pd.DataFrame, ligand_name_1: str, ligand_name
                  linestyle='solid', linewidth=2, 
                  label=f"Linear regression")
         
+        r2_text = f"$R^2$ = {r2:.3f}"
+        r2_label = Line2D([], [], color='none', label=r2_text)
+
+        ax.legend(handles=[fit_line, r2_label], loc="upper left", frameon=True, bbox_to_anchor=(0.02, 0.98))
+        ax.set_title("Regression of Ceramide Predicted Affinities")
         plot_title = f"regress_heat_scatter_{ligand_name_1}_vs_{ligand_name_2}.png"
 
-    r2_text = f"$R^2$ = {r2:.3f}"
-    r2_label = Line2D([], [], color='none', label=r2_text)
-
-    ax.legend(handles=[fit_line, r2_label], loc="upper left", frameon=True, bbox_to_anchor=(0.02, 0.98))
     fig.tight_layout()
     plot_file_path = PLOT_DIR / plot_title
     plt.savefig(plot_file_path, bbox_inches='tight', dpi=600)
