@@ -6,7 +6,7 @@ This guide explains the main steps needed to run the project clearly and in orde
 
 ## Step 1: Set up the Python environment, install `requirements.txt`, and add *Capstone_TA_Files* to your root directory
 
-Unzip the file we submitted in learning suite and copy it into the project root
+Unzip the file we submitted in Learning Suite. Paste the entire folder into the BIO-465-Capstone-Project folder.
 
 This project was tested using a Conda environment with Python 3.11.
 
@@ -111,7 +111,7 @@ This step should:
 After running, you can check the YAML folders with:
 
 ```bash
-ls zz_yaml_files
+ls yaml_files
 ```
 
 ---
@@ -121,6 +121,8 @@ ls zz_yaml_files
 This script generates figures from processed prediction CSV files.
 
 **You must exit out of the graph for it to continue to the next because we are using show()**
+
+**Enrichr has a chance of getting Error 429: Too many requests. If this happens, wait a few minutes and try step 4 again. This is not something we can control**
 
 Run:
 
